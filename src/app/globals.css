@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Editorial paper palette ─────────────────────────────── */
+  --color-paper: #f7f5ef; /* warm paper canvas */
+  --color-paper-2: #efece1; /* recessed paper surface */
+  --color-ink: #0a0b0d; /* near-black ink */
+  --color-ink-soft: #56585e; /* muted body / captions */
+
+  /* Accents - used as confident colour blocks, not glows */
+  --color-signal: #e5342b; /* red - the slip */
+  --color-up: #0f9d63; /* green - up-ticks / positive */
+  --color-electric: #3d5aff; /* electric blue - highlight */
+
+  /* Fonts */
+  --font-display: var(--font-anton), "Arial Narrow", sans-serif;
+  --font-body: var(--font-poppins), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  /* Motion */
+  --animate-marquee: marquee var(--marquee-duration, 40s) linear infinite;
+  --animate-marquee-reverse: marquee-reverse var(--marquee-duration, 40s)
+    linear infinite;
+  --animate-spin-slow: spin 14s linear infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100% - var(--marquee-gap, 0px)));
+  }
+}
+
+@keyframes marquee-reverse {
+  from {
+    transform: translateX(calc(-100% - var(--marquee-gap, 0px)));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* keep anchored sections clear of the sticky nav */
+section[id] {
+  scroll-margin-top: 5.5rem;
+}
+
+/* <main> is focused programmatically after a route transition (for screen
+   readers) - it should not paint a focus ring. */
+main:focus {
+  outline: none;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Display headlines: Anton, uppercase, tightened */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Outlined display type for the big marquee band (editorial flourish) */
+.text-outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--color-ink);
+}
+
+/* Editorial hard offset shadow used on hover for tactile cards/buttons */
+.shadow-hard {
+  box-shadow: 6px 6px 0 0 var(--color-ink);
+}
+.shadow-hard-sm {
+  box-shadow: 4px 4px 0 0 var(--color-ink);
+}
+
+::selection {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+/* Thin scrollbar tuned to paper */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-paper);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(10, 11, 13, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(10, 11, 13, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
