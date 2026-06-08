@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, type MotionValue } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -10,11 +10,9 @@ import { cn } from "@/lib/utils";
  * pull in GSAP + Lenis; the namespace isn't resolvable here, so the stacking
  * behaviour is rebuilt with Framer Motion's useScroll.
  *
- * Canonical centered-pin deck: each card lives in its own full-height section
- * and pins to the viewport centre. As later cards arrive they cover the earlier
- * ones, which scale down slightly behind the incoming card - so they stack like
- * a physical deck with no bleed-through. Each card peeks a few px lower than the
- * last via a stepped offset.
+ * Desktop: a centered-pin deck where cards stack as you scroll. Mobile: the
+ * cards are taller than the viewport, so the pinned stack is cramped - there we
+ * fall back to a clean vertical list (best UX on a phone).
  */
 export function CardStackScroll({
   children,
@@ -29,6 +27,26 @@ export function CardStackScroll({
     offset: ["start start", "end end"],
   });
   const count = children.length;
+
+  // pinned stack only on >= sm; plain list on phones
+  const [stack, setStack] = useState(true);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 640px)");
+    const apply = () => setStack(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  if (!stack) {
+    return (
+      <div className={cn("flex flex-col gap-6", className)}>
+        {children.map((child, i) => (
+          <div key={i}>{child}</div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div ref={ref} className={cn("relative", className)}>

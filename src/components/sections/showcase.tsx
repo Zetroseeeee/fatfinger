@@ -133,14 +133,15 @@ export function Showcase() {
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <Reveal className="mb-4 max-w-2xl">
           <p className="font-mono text-[12px] uppercase tracking-[0.2em] text-electric">
-            The brief, in the flesh
+            See it before you subscribe
           </p>
           <h2 className="mt-4 font-display text-[clamp(2.25rem,6vw,4.5rem)] leading-[0.92] text-ink">
-            Three mornings. Three slips.
+            Three real issues, top to bottom.
           </h2>
           <p className="mt-4 max-w-lg text-sm leading-relaxed text-ink-soft">
-            Scroll through the lead stories. Number up top, the story in the
-            middle, the take in colour, the source at the bottom.{" "}
+            This is exactly what lands in your inbox: the number that moved the
+            market, the story behind it, the take in colour, and the receipts.
+            Scroll through three.{" "}
             <TransitionLink
               href="/issues"
               className="font-medium text-ink underline decoration-signal decoration-2 underline-offset-4 hover:text-signal"

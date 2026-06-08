@@ -148,9 +148,9 @@ export function Bento() {
             Why it hits different
           </p>
           <h2 className="mt-4 font-display text-[clamp(2.25rem,6vw,4.5rem)] leading-[0.92] text-ink">
-            Four reasons it actually
+            Four reasons it earns
             <br />
-            earns the open.
+            a spot in your inbox.
           </h2>
         </Reveal>
 

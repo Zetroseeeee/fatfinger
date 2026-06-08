@@ -165,7 +165,7 @@ export function FatFingerChart({
               </Bar>
             </BarChart>
           ) : type === "area" ? (
-            <AreaChart data={data} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
+            <AreaChart data={data} margin={{ top: 16, right: 40, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="ffArea" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={CHART.signal} stopOpacity={0.28} />
@@ -215,7 +215,7 @@ export function FatFingerChart({
               )}
             </AreaChart>
           ) : (
-            <LineChart data={data} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
+            <LineChart data={data} margin={{ top: 16, right: 40, left: 0, bottom: 0 }}>
               {common}
               {contextKey && (
                 <Line

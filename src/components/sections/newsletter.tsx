@@ -63,7 +63,7 @@ export function Newsletter() {
             The desk, in your inbox
           </p>
           <h2 className="mt-4 font-display text-[clamp(2.25rem,6vw,4.5rem)] leading-[0.92] text-ink">
-            One slip a day. No noise.
+            One sharp brief a day. No noise.
           </h2>
         </Reveal>
 

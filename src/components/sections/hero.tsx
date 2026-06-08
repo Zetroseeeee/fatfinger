@@ -61,10 +61,10 @@ export function Hero() {
                 <h1 className="mt-5 font-display text-[clamp(2.75rem,9vw,7.5rem)] leading-[0.86] text-ink">
                   <span className="block">The slip that</span>
                   <span className="relative inline-block">
-                    {/* colour-block highlight behind the word */}
+                    {/* colour-block highlight, hugging the word */}
                     <span
                       aria-hidden
-                      className="absolute -inset-x-2 bottom-1 top-2 -z-0 -skew-y-1 bg-electric/90"
+                      className="absolute -inset-x-1 bottom-[0.12em] top-[0.02em] -z-0 -skew-y-1 bg-electric"
                     />
                     <span className="relative z-10 px-1 text-paper">moves</span>
                   </span>{" "}
