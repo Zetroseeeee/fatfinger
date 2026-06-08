@@ -1,20 +1,23 @@
 import { NextResponse } from "next/server";
+import { hasDb, upsertPending } from "@/lib/db";
+import { hasResend, sendConfirmEmail } from "@/lib/email";
 
 /**
- * POST /api/subscribe - newsletter signup.
- *
- * This is the seam for the self-hosted stack (see ARCHITECTURE.md):
+ * POST /api/subscribe - newsletter signup (double opt-in).
  *   1. validate email (+ honeypot spam guard)
- *   2. upsert a `pending` subscriber row           → DATABASE_URL (Supabase/Neon)
- *   3. send a double-opt-in confirmation email      → RESEND_API_KEY (Resend)
+ *   2. upsert a `pending` subscriber row              → DATABASE_URL (Supabase/Neon)
+ *   3. send a confirmation email with a tokenised link → RESEND_API_KEY (Resend)
  *
- * It runs safely with NO keys configured: it validates and returns ok so the
- * UI funnel works today. When the env vars land at deploy, fill the two TODOs
- * and it goes live - nothing else changes. We never trust the client; the email
- * isn't "confirmed" until they click the link in step 3.
+ * Degrades gracefully: with no keys it validates and returns ok so the funnel
+ * works; a real confirmation only goes out when BOTH the DB and Resend are
+ * configured (the token must be persisted to be confirmable). We never trust the
+ * client; nobody is `confirmed` until they click the link.
  */
-
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function siteUrl(req: Request) {
+  return process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+}
 
 export async function POST(req: Request) {
   let body: { email?: string; website?: string };
@@ -24,49 +27,33 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "bad_request" }, { status: 400 });
   }
 
-  const hasDb = !!process.env.DATABASE_URL;
-  const hasResend = !!process.env.RESEND_API_KEY;
+  // a confirmation email is only real if we can persist + send it
+  const canConfirm = hasDb && hasResend;
 
-  // Honeypot: real users never fill `website`. Bots do → pretend success with
-  // the same response shape so they can't detect they were caught.
+  // Honeypot: bots fill `website` → fake success with the same response shape.
   if (body.website) {
-    return NextResponse.json({ ok: true, pendingConfirmation: hasResend });
+    return NextResponse.json({ ok: true, pendingConfirmation: canConfirm });
   }
 
   const email = (body.email ?? "").trim().toLowerCase();
-  // RFC 5321 caps an address at 320 chars; reject early to avoid abuse.
   if (!EMAIL_RE.test(email) || email.length > 320) {
     return NextResponse.json({ ok: false, error: "invalid_email" }, { status: 400 });
   }
 
   try {
+    const token = crypto.randomUUID();
+
     if (hasDb) {
-      // TODO: upsert subscriber as { email, status: 'pending', token, createdAt }
-      //   import { sql } from "@/lib/db"
-      //   await sql`insert into subscribers (email, status, token) values (...)
-      //             on conflict (email) do nothing`
+      await upsertPending(email, token);
     }
 
-    if (hasResend) {
-      // TODO: send the double-opt-in email with React Email (our brand template)
-      //   import { Resend } from "resend"
-      //   const resend = new Resend(process.env.RESEND_API_KEY)
-      //   await resend.emails.send({
-      //     from: process.env.EMAIL_FROM!,
-      //     to: email,
-      //     subject: "Confirm your Fat Finger subscription",
-      //     react: ConfirmEmail({ url: `${SITE}/api/confirm?token=${token}` }),
-      //   })
+    if (canConfirm) {
+      await sendConfirmEmail(email, `${siteUrl(req)}/api/confirm?token=${token}`);
     } else {
-      // No provider yet - log so it's visible in dev. Client-side success below.
-      console.info(`[subscribe] queued (no provider configured): ${email}`);
+      console.info(`[subscribe] captured (no provider): ${email}`);
     }
 
-    return NextResponse.json({
-      ok: true,
-      // tell the UI whether a real confirmation email is on its way
-      pendingConfirmation: hasResend,
-    });
+    return NextResponse.json({ ok: true, pendingConfirmation: canConfirm });
   } catch (err) {
     console.error("[subscribe] error", err);
     return NextResponse.json({ ok: false, error: "server_error" }, { status: 500 });

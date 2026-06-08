@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Typewriter } from "@/components/ui/typewriter";
 import { AnimatedNumber } from "@/components/v1/skiper37";
@@ -10,33 +11,43 @@ import { Reveal, RevealItem } from "@/components/ui/reveal";
 /**
  * Section 3 - HERO
  * Editorial, paper, left-aligned. Oversized Anton headline with a typewriter
- * line + red caret, a colour-block highlight, a rotating stamp, and a stat row
- * with count-up numbers. No glow / grid-beam / grain - clean and confident.
+ * line + red caret, a colour-block highlight, a rotating stamp, and a stat row.
+ * The stats are LIVE (real counts from /api/stats); they default to 0 when there
+ * is nothing yet. No glow / grid-beam / grain - clean and confident.
  */
 
-const STATS = [
-  { value: 42, suffix: "K", label: "readers on the desk", color: "text-electric" },
-  { value: 6, suffix: ":30", label: "AM ET, every weekday", color: "text-signal" },
-  { value: 97, suffix: "%", label: "open rate, last issue", color: "text-up" },
-];
+type Stats = { subscribers: number; issues: number; openRate: number };
 
 export function Hero() {
+  const [stats, setStats] = useState<Stats>({
+    subscribers: 0,
+    issues: 0,
+    openRate: 0,
+  });
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/stats")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && d) setStats(d);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const STATS = [
+    { value: stats.subscribers, suffix: "", label: "readers on the desk", color: "text-electric" },
+    { value: stats.issues, suffix: "", label: "issues published", color: "text-signal" },
+    { value: stats.openRate, suffix: "%", label: "open rate, last issue", color: "text-up" },
+  ];
+
   return (
     <section id="top" className="relative overflow-hidden">
-      <div className="mx-auto max-w-7xl px-5 pb-20 pt-14 sm:px-8 sm:pt-20">
-        {/* dateline row */}
-        <Reveal
-          className="flex flex-wrap items-center justify-between gap-4 border-b border-ink/15 pb-5 font-mono text-[11px] uppercase tracking-[0.18em] text-ink-soft"
-        >
-          <span>Issue Nº 001 · Markets media</span>
-          <span className="hidden sm:inline">Est. for the curious · Not financial advice</span>
-          <span className="flex items-center gap-2">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-signal" />
-            Live tape
-          </span>
-        </Reveal>
-
-        <div className="relative mt-10 grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
+      <div className="mx-auto max-w-7xl px-5 pb-20 pt-16 sm:px-8 sm:pt-24">
+        <div className="relative grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
           {/* headline + copy */}
           <div className="max-w-4xl">
             <Reveal stagger={0.12}>
