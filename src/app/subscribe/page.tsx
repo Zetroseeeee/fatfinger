@@ -103,9 +103,9 @@ export default function SubscribePage() {
             Pick your seat.
           </h1>
           <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-ink-soft sm:text-lg">
-            The daily brief is free and always will be. The paid desks add the
-            quant layer, the full energy coverage, and the data underneath. Start
-            free now, upgrade when the terminals open.
+            The daily brief is free and always will be. The paid plans add deeper
+            quant analysis, the full energy coverage, and the data behind every
+            call. Start free now, upgrade when the paid plans open.
           </p>
         </div>
 

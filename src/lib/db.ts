@@ -85,3 +85,39 @@ export async function confirmByToken(token: string): Promise<string | null> {
     return null;
   }
 }
+
+// ── Skinny Finger Engine drafts ───────────────────────────────────────────
+let draftsReady = false;
+async function ensureDrafts() {
+  if (!sql || draftsReady) return;
+  await sql`
+    create table if not exists generated_issues (
+      slug        text primary key,
+      date        text not null,
+      data        jsonb not null,
+      status      text not null default 'draft', -- draft | published
+      created_at  timestamptz not null default now()
+    )
+  `;
+  draftsReady = true;
+}
+
+/** persist an engine-written issue draft (idempotent on slug); no-op without DB */
+export async function saveGeneratedIssue(
+  slug: string,
+  date: string,
+  data: unknown
+): Promise<boolean> {
+  if (!sql) return false;
+  try {
+    await ensureDrafts();
+    await sql`
+      insert into generated_issues (slug, date, data)
+      values (${slug}, ${date}, ${JSON.stringify(data)}::jsonb)
+      on conflict (slug) do update set data = excluded.data, date = excluded.date
+    `;
+    return true;
+  } catch {
+    return false;
+  }
+}

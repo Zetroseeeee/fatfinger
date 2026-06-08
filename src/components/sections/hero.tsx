@@ -90,9 +90,10 @@ export function Hero() {
               <RevealItem>
                 <p className="mt-7 max-w-xl text-pretty text-base leading-relaxed text-ink-soft sm:text-lg">
                   The sharpest, wittiest read on markets, energy and macro.
-                  Decoded, not reported. Get the number that moved the tape, the
-                  commodities story nobody else covers, and one sharp take per
-                  story. Five minutes. No jargon. No gatekeeping.
+                  Decoded, not reported. Get the number that moved the market,
+                  the commodities story nobody else covers, and a sharp take that
+                  tells you what it means. Five minutes. No jargon. No
+                  gatekeeping.
                 </p>
               </RevealItem>
 

@@ -67,8 +67,14 @@ The bar: a reader screenshots it and it looks like it came off a real desk.
 
 - **P0 (done):** site, live ticker, newsletter template + sample issues, subscribe
   + double opt-in (Resend/Supabase seam), paid-tier page, mobile.
-- **P1:** Analysis Engine v1 - 2-3 models fan-out + verify + editor layer on a
-  cron, producing one real issue/day from live data. Human-in-the-loop review.
+- **P1 (started): the Skinny Finger Engine.** A single-model writer is BUILT
+  (\`src/lib/skinny-finger.ts\`): Claude Opus 4.8, adaptive thinking + high effort,
+  JSON-schema-constrained to the \`Issue\` shape, run on a weekday cron
+  (\`/api/cron/write-issue\`, \`vercel.json\`), drafts saved for human review.
+  Activates with \`ANTHROPIC_API_KEY\` + \`CRON_SECRET\`. **Next:** feed it real
+  prices + news/filings, then widen to the multi-model fan-out + adversarial
+  verify (below) so it's not one model's opinion but an aggregated, fact-checked
+  one.
 - **P2:** FatFingerChartGenerator v1 - technicals + auto-annotation on real data,
   wired into issues.
 - **P3:** widen the model/source panel, add track-record weighting, fundamentals
