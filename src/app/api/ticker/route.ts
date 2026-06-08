@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 
 /**
- * GET /api/ticker - live market snapshot for the top ticker.
+ * GET /api/ticker - daily (end-of-day) market snapshot for the top ticker.
  *
  * Strategy (resilient by design - a ticker must NEVER render broken):
- *   • Crypto  → CoinGecko (keyless, reliable, one batched request)         = live now
- *   • Macro   → Yahoo chart endpoint, fetched SEQUENTIALLY (bursts get 429) = live in prod
- *   • Optional MARKET_DATA_API_KEY (Twelve Data) for reliable macro at scale
+ *   • Crypto  → CoinGecko (keyless, batched)
+ *   • Macro   → Twelve Data ETF proxies when MARKET_DATA_API_KEY is set,
+ *               else Yahoo (works locally; datacenter IPs get 429'd)
  *   • Any symbol that fails falls back to a curated last-known value
  *
- * Cached 30s server-side (shared across all clients) so we stay gentle on the
- * upstreams. The client polls this; the curated SEED ships as the first paint.
+ * Refreshed once a day (end-of-day snapshot), not live, so we stay well within
+ * every free-tier limit. The curated SEED ships as the first paint.
  */
 
-export const revalidate = 30;
+export const revalidate = 86400;
 
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36";
@@ -68,7 +68,7 @@ async function cryptoTicks(): Promise<Tick[]> {
     const ids = COINS.map((c) => c.id).join(",");
     const r = await fetch(
       `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,
-      { headers: { Accept: "application/json" }, next: { revalidate: 45 } }
+      { headers: { Accept: "application/json" }, next: { revalidate: 86400 } }
     );
     if (!r.ok) throw new Error(String(r.status));
     const j = await r.json();
@@ -122,9 +122,8 @@ async function twelveDataMacro(key: string): Promise<Tick[]> {
       `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(
         syms
       )}&apikey=${key}`,
-      // 15-min cache: 7 symbols × ~96 calls/day = ~672 credits, under the
-      // free tier's 800/day. Crypto stays fresher (CoinGecko, 45s).
-      { next: { revalidate: 900 } }
+      // once-a-day fetch: ~7 Twelve Data credits/day, trivially within the free tier.
+      { next: { revalidate: 86400 } }
     );
     if (!r.ok) return MACRO.map(macroFb);
     const j = await r.json();
@@ -153,7 +152,7 @@ async function yahooMacro(): Promise<Tick[]> {
         )}?range=1d&interval=1d`,
         {
           headers: { "User-Agent": UA, Accept: "application/json" },
-          next: { revalidate: 30 },
+          next: { revalidate: 86400 },
         }
       );
       if (r.ok) {
@@ -200,6 +199,6 @@ export async function GET() {
 
   return NextResponse.json(
     { ticks, liveCount: ticks.filter((t) => t.live).length, asOf: new Date().toISOString() },
-    { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" } }
+    { headers: { "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=43200" } }
   );
 }
