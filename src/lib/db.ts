@@ -10,9 +10,17 @@ import postgres from "postgres";
  */
 const url = process.env.DATABASE_URL;
 
-// module-level singleton, reused across warm serverless invocations
+// module-level singleton, reused across warm serverless invocations.
+// `prepare: false` is required for Supabase's transaction pooler (pgbouncer);
+// SSL is required by Supabase/Neon (skip only for a local Postgres).
+const isLocal = !!url && /localhost|127\.0\.0\.1/.test(url);
 export const sql = url
-  ? postgres(url, { prepare: false, idle_timeout: 20, max: 3 })
+  ? postgres(url, {
+      prepare: false,
+      idle_timeout: 20,
+      max: 3,
+      ssl: isLocal ? false : "require",
+    })
   : null;
 
 export const hasDb = !!sql;
