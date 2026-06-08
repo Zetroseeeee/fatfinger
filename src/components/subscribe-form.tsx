@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /**
- * SubscribeForm — the one real signup form, shared by the homepage newsletter
+ * SubscribeForm - the one real signup form, shared by the homepage newsletter
  * section and the /subscribe page. POSTs to /api/subscribe (Resend + DB seam),
  * honeypot + accurate success/error messaging.
  */
@@ -75,8 +75,8 @@ export function SubscribeForm({
             </span>
             <span className="font-mono text-[12px] text-ink-soft">
               {pendingConfirmation
-                ? "Check your inbox to confirm. First slip lands at 6:30 AM ET."
-                : "You're on the list. First slip lands at 6:30 AM ET."}
+                ? "Check your inbox to confirm. First brief lands at 6:30 AM ET."
+                : "You're on the list. First brief lands at 6:30 AM ET."}
             </span>
           </motion.div>
         ) : (

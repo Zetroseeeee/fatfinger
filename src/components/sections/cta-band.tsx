@@ -20,7 +20,7 @@ export function CtaBand() {
               key={i}
               className="font-display text-outline px-6 text-4xl sm:text-6xl"
             >
-              The slip that moves markets&nbsp;
+              The sharpest read on markets, energy and macro&nbsp;
               <span className="text-signal [-webkit-text-stroke:0]">●</span>&nbsp;
             </span>
           ))}
@@ -41,8 +41,8 @@ export function CtaBand() {
               <span className="text-ink">.</span>
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-paper/85">
-              Join 42,000 traders, analysts, and the merely curious. One email,
-              every market morning. Unsubscribe in one click. You won&apos;t.
+              Join traders, analysts, and the merely curious. One email
+              every market morning. Unsubscribe anytime.
             </p>
             <div className="mt-9 flex justify-center">
               <MagneticButton

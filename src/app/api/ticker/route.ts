@@ -94,7 +94,7 @@ type Macro = {
   fb: { v: number; c: number };
 };
 
-// Liquid ETF proxies — real traded instruments, live on Twelve Data's free
+// Liquid ETF proxies - real traded instruments, live on Twelve Data's free
 // tier (indices/commodities themselves are paid-only). SPY=S&P 500, QQQ=Nasdaq
 // 100, USO=WTI oil, BNO=Brent, GLD=gold, UNG=nat gas, UUP=US dollar. Yahoo and
 // Twelve Data share the same ticker for ETFs.

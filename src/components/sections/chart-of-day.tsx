@@ -19,8 +19,8 @@ export function ChartOfDay() {
             One chart. One point.
           </h2>
           <p className="mt-4 max-w-lg text-sm leading-relaxed text-ink-soft">
-            Refined terminal, not Excel. Everything stays muted except the one
-            thing the story is about, so your eye goes straight to it.
+            Two of today's stories, charted. Red marks the one number that
+            moved the market; everything else stays muted.
           </p>
         </Reveal>
 
@@ -28,8 +28,8 @@ export function ChartOfDay() {
           <Reveal>
             <FatFingerChart
               type="area"
-              title="Brent crude, last 12 sessions"
-              take="The barrels were symbolic. The selloff wasn't."
+              title="Brent crude, 12 sessions (down 2%)"
+              take="OPEC added barrels nobody needed. Oil fell anyway."
               source="SOURCE: ICE Brent front-month · illustrative"
               xKey="d"
               yKey="px"
@@ -57,7 +57,7 @@ export function ChartOfDay() {
           <Reveal delay={0.1}>
             <FatFingerChart
               type="bar"
-              title="Hyperscaler AI infra spend / month"
+              title="Big tech AI spend, per month"
               take="Compute is the new oil, and even Google is renting it."
               source="SOURCE: filings + estimates · illustrative"
               xKey="co"

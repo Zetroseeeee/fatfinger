@@ -80,7 +80,7 @@ export function Hero() {
                     caretClassName="bg-signal"
                     words={[
                       "OIL, POWER, METALS. DECODED.",
-                      "THE FAT FINGER THAT MOVED MILLIONS.",
+                      "ONE TYPO THAT MOVED MILLIONS.",
                       "BLOOMBERG'S BRAIN, A TRADER'S MOUTH.",
                     ]}
                   />

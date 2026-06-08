@@ -83,8 +83,8 @@ export function Newsletter() {
                 </span>
                 <span className="font-mono text-[12px] text-ink-soft">
                   {pendingConfirmation
-                    ? "Check your inbox to confirm. First slip lands at 6:30 AM ET."
-                    : "You're on the list. First slip lands at 6:30 AM ET."}
+                    ? "Check your inbox to confirm. First brief lands at 6:30 AM ET."
+                    : "You're on the list. First brief lands at 6:30 AM ET."}
                 </span>
               </motion.div>
             ) : (

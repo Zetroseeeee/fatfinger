@@ -21,7 +21,7 @@ const ACCENT: Record<Accent, { tag: string; shadow: string; rule: string }> = {
   ink: { tag: "bg-ink text-paper", shadow: "hover:shadow-[8px_8px_0_0_var(--color-ink)]", rule: "bg-ink" },
 };
 
-// illustrative data — // TODO: swap in real feeds
+// illustrative data - // TODO: swap in real feeds
 const BRENT = [
   { d: "1", px: 79.1 }, { d: "2", px: 78.6 }, { d: "3", px: 78.9 },
   { d: "4", px: 77.8 }, { d: "5", px: 78.2 }, { d: "6", px: 77.1 },
@@ -70,21 +70,21 @@ const CARDS: Card[] = [
   {
     kicker: "02 / No gatekeeping",
     title: "Bloomberg-grade, not Bloomberg-priced",
-    body: "Most finance media is dumbed-down memes or research locked behind a $24,000 terminal. We do the rigour and the readability, and we charge nothing for the daily.",
+    body: "Most finance media is dumbed-down memes or research locked behind a $24,000 terminal. We charge nothing for the rigour and the readability.",
     span: "",
     accent: "electric",
   },
   {
     kicker: "03 / The take",
     title: "Every story ends with the 'so what'",
-    body: "One sharp closing line that tells you what it actually means, usually an analogy you'll repeat at the desk. Like: 'Compute is the new oil, and even Google is renting it.'",
+    body: "One closing line that says what it actually means. Usually an analogy you'll repeat at the desk, like: 'Compute is the new oil, and even Google is renting it.'",
     span: "",
     accent: "ink",
   },
   {
     kicker: "04 / The home beat",
     title: "Energy, covered harder than anyone",
-    body: "Oil, gas, power, metals and the money plumbing underneath. The stuff that actually moves the world, decoded with a quant brain and said in plain English.",
+    body: "Oil, gas, power, metals, and the money moving them. The beat nobody else runs, decoded with quant rigour and written in plain English.",
     span: "md:col-span-2",
     accent: "up",
     chart: (
@@ -148,9 +148,9 @@ export function Bento() {
             Why it hits different
           </p>
           <h2 className="mt-4 font-display text-[clamp(2.25rem,6vw,4.5rem)] leading-[0.92] text-ink">
-            Four reasons it earns
+            Four reasons it's
             <br />
-            a spot in your inbox.
+            not like the rest.
           </h2>
         </Reveal>
 

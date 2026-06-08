@@ -39,7 +39,7 @@ const TIERS: Tier[] = [
     name: "The Terminal",
     price: "£19.99",
     cadence: "/ month",
-    blurb: "For people who trade the open. The quant layer under every story.",
+    blurb: "For traders. The numbers behind every market move.",
     accent: "electric",
     state: "soon",
     features: [
@@ -54,12 +54,12 @@ const TIERS: Tier[] = [
     name: "The Whole Desk",
     price: "£49.99",
     cadence: "/ month",
-    blurb: "The works. For the desk that wants the edge before everyone else.",
+    blurb: "For your whole desk. Deep dives, raw data, and API access.",
     accent: "signal",
     state: "soon",
     features: [
       "Everything in The Terminal",
-      "Same-day deep dives on the slip that moved it",
+      "Same-day deep dives on the trade that moved the market",
       "Raw data feeds + API access",
       "Private community + analyst Q&A",
       "Priority everything",
@@ -97,15 +97,15 @@ export default function SubscribePage() {
       <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-24">
         <div className="max-w-3xl">
           <p className="font-mono text-[12px] uppercase tracking-[0.2em] text-signal">
-            Get on the desk
+            Subscribe
           </p>
           <h1 className="mt-4 font-display text-[clamp(2.5rem,7vw,5.5rem)] leading-[0.9] text-ink">
-            Pick your seat.
+            Pick your plan.
           </h1>
           <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-ink-soft sm:text-lg">
             The daily brief is free and always will be. The paid plans add deeper
-            quant analysis, the full energy coverage, and the data behind every
-            call. Start free now, upgrade when the paid plans open.
+            quant analysis, the full energy coverage, and the raw data behind
+            every call. Start free now, upgrade when the paid plans open.
           </p>
         </div>
 
