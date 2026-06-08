@@ -107,6 +107,17 @@ export function FatFingerChart({
       typeof valueDecimals === "number" ? v.toFixed(valueDecimals) : v
     }${valueSuffix}`;
 
+  // Padded y-domain so a line/area uses the panel's height instead of hugging
+  // the top. Bars stay anchored at 0 (the honest baseline for magnitudes).
+  const yNums = data.map((d) => Number(d[yKey])).filter((v) => Number.isFinite(v));
+  const yMin = yNums.length ? Math.min(...yNums) : 0;
+  const yMax = yNums.length ? Math.max(...yNums) : 1;
+  const pad = (yMax - yMin) * 0.14 || Math.abs(yMax) * 0.05 || 1;
+  const yDomain: [number | string, number | string] =
+    type === "bar"
+      ? [0, "auto"]
+      : [yMin >= 0 ? Math.max(0, yMin - pad) : yMin - pad, yMax + pad];
+
   const common = (
     <>
       <CartesianGrid stroke={CHART.grid} strokeDasharray="2 4" vertical={false} />
@@ -122,6 +133,7 @@ export function FatFingerChart({
         tickLine={false}
         axisLine={false}
         width={44}
+        domain={yDomain as never}
         tickFormatter={((v: number) => fmtVal(v)) as never}
       />
       <Tooltip
@@ -150,7 +162,7 @@ export function FatFingerChart({
       </figcaption>
 
       <div style={{ width: "100%", height }}>
-        <ResponsiveContainer>
+        <ResponsiveContainer minWidth={0} minHeight={0}>
           {type === "bar" ? (
             <BarChart data={data} margin={{ top: 16, right: 12, left: 0, bottom: 0 }}>
               {common}

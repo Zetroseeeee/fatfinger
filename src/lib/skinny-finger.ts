@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Issue } from "@/content/issues";
+import { normalizeChart, type RawChart } from "./chart-gen";
 
 /**
  * The Skinny Finger Engine - Fat Finger's proprietary morning writer.
@@ -54,7 +55,7 @@ STRUCTURE you must fill (this maps to the JSON schema):
 - desk: 4 to 6 rapid-fire one-liner items, each a headline plus a one-sentence mini-take.
 - energy: 1 to 2 commodities/energy items (the signature section), each with a short body and a take.
 - fatFinger: the funny/weird item of the day, with a take.
-- chart: one chart spec - choose line, area, or bar; give it a title, a one-line take, a source, 7 to 12 illustrative data points (x label + y number), the index of the single point that matters (highlightIndex), and a short marker label for it. Value formatting via valuePrefix (e.g. "$"), valueSuffix (e.g. "%"), valueDecimals.
+- chart: ONE chart that visualises the issue's most chartable story (usually the Big Slip or the lead energy move). Use line or area for a trend over time, bar to compare across a few categories. Give 8 to 12 data points (x = a short label like a date or month, y = a number) that genuinely move and tell the story; never flatline. highlightIndex points to the single number the story is about, almost always the latest point. Title names the instrument (e.g. "Brent crude" or "Henry Hub gas"); the take says what the move means. Set valuePrefix ("$"), valueSuffix ("%"), and valueDecimals to fit the data, and give a short markerLabel for the highlighted point.
 - signOff: one dry closing line.
 
 Write the whole issue now as JSON matching the schema exactly. Make it genuinely sharp - the kind of thing people forward to the desk.`;
@@ -123,37 +124,6 @@ export type Packet = {
   notes?: string; // optional source material / themes to cover
 };
 
-type RawChart = {
-  type: "line" | "area" | "bar";
-  title: string;
-  take: string;
-  source: string;
-  valuePrefix: string;
-  valueSuffix: string;
-  valueDecimals: number;
-  highlightIndex: number;
-  markerLabel: string;
-  data: { x: string; y: number }[];
-};
-
-/** turn the engine's chart shape into FatFingerChartProps */
-function toChart(c: RawChart): Issue["chart"] {
-  return {
-    type: c.type,
-    title: c.title,
-    take: c.take,
-    source: c.source,
-    xKey: "x",
-    yKey: "y",
-    highlightIndex: c.highlightIndex,
-    markerLabel: c.markerLabel || undefined,
-    valuePrefix: c.valuePrefix || undefined,
-    valueSuffix: c.valueSuffix || undefined,
-    valueDecimals: c.valueDecimals,
-    data: c.data,
-  };
-}
-
 /** Draft a full issue from a data packet. Throws if the engine isn't configured. */
 export async function writeIssue(packet: Packet): Promise<Issue> {
   if (!client) throw new Error("ANTHROPIC_API_KEY not set - engine offline");
@@ -189,6 +159,14 @@ export async function writeIssue(packet: Packet): Promise<Issue> {
   if (!textBlock || textBlock.type !== "text") {
     throw new Error("engine returned no text");
   }
-  const raw = JSON.parse(textBlock.text) as Omit<Issue, "chart"> & { chart: RawChart };
-  return { ...raw, slug: packet.slug, date: packet.date, chart: toChart(raw.chart) };
+  const raw = JSON.parse(textBlock.text) as Omit<Issue, "chart"> & {
+    chart: RawChart;
+  };
+  // run the chart through the generator so it is always on-brand + correct
+  return {
+    ...raw,
+    slug: packet.slug,
+    date: packet.date,
+    chart: normalizeChart(raw.chart),
+  };
 }

@@ -42,6 +42,106 @@ export type Issue = {
 };
 
 export const ISSUES: Issue[] = [
+  // ──────────────────────────────────── Issue 0 · first Skinny Finger draft
+  {
+    slug: "the-nuclear-option",
+    date: "Mon · Jun 8, 2026",
+    preview:
+      "Big Tech is panic-buying nuclear, uranium just hit a 17-year high, and a power trader fat-fingered a city off the grid.",
+    mood: "Risk-on and radioactive.",
+    tape: [
+      { label: "S&P 500", value: "5,521", chg: "+0.22%", dir: "up" },
+      { label: "Nasdaq", value: "19,388", chg: "+0.34%", dir: "up" },
+      { label: "WTI", value: "$72.90", chg: "-0.40%", dir: "down" },
+      { label: "Brent", value: "$76.55", chg: "-0.30%", dir: "down" },
+      { label: "Nat Gas", value: "$3.78", chg: "+2.10%", dir: "up" },
+      { label: "Uranium", value: "$104.20", chg: "+4.80%", dir: "up" },
+      { label: "Gold", value: "$2,402", chg: "+0.50%", dir: "up" },
+      { label: "US 10Y", value: "4.31%", chg: "-2bp", dir: "down" },
+    ],
+    bigSlip: {
+      kicker: "Energy · Nuclear",
+      headline: "Big Tech just turned uranium into a tech trade.",
+      paragraphs: [
+        "Uranium punched through $100 a pound to a 17-year high. The buyers aren't utilities hedging their winter. They're hyperscalers, shopping for power that doesn't blink.",
+        "The logic is brutal and simple. An AI data center wants gigawatts, around the clock, with no weather excuses. Solar sleeps. Wind sulks. A reactor just hums. So Microsoft, Amazon and Google have spent the year signing nuclear deals that would have been unthinkable in 2015.",
+        "The catch: the West stopped building reactors and mining uranium two decades ago. Demand turned up early. Supply is still filling out the paperwork. Price did the rest.",
+      ],
+      take: "The cleanest way to play AI might be a rock you can't pronounce, dug up in Kazakhstan.",
+      source: "SOURCE: UxC spot, company filings · illustrative",
+    },
+    desk: [
+      {
+        headline: "Uranium spot cleared $104, a 17-year high.",
+        take: "The most boring commodity on Earth is suddenly the AI trade.",
+      },
+      {
+        headline: "Nuclear utility stocks outran the Nasdaq this quarter.",
+        take: "The hottest chip play of the year owns no chips.",
+      },
+      {
+        headline: "WTI slipped under $73 on soft China data.",
+        take: "Oil keeps voting for a slowdown nobody else has RSVP'd to.",
+      },
+      {
+        headline: "Gold nudged to $2,402 as yields eased.",
+        take: "The 5,000-year-old trade doesn't need a thesis.",
+      },
+      {
+        headline: "The 10-year dipped to 4.31% before the auction.",
+        take: "Bonds smell a cut the Fed won't admit it's cooking.",
+      },
+    ],
+    energy: [
+      {
+        headline: "The grid connection queue is the new oil reserve.",
+        body: "It now takes years to plug a new power plant into the US grid. The backlog waiting for a connection has passed two terawatts, more than the entire installed fleet. The bottleneck isn't generation. It's the on-ramp.",
+        take: "You can build the reactor. Good luck booking the socket.",
+        source: "SOURCE: Berkeley Lab queue data · illustrative",
+      },
+      {
+        headline: "Kazakhstan sneezed and uranium caught a cold.",
+        body: "Kazatomprom, which digs up roughly 40% of the world's uranium, trimmed its output guidance again, blaming a shortage of sulphuric acid. When one country is the swing producer, its supply chain is everyone's problem.",
+        take: "OPEC for yellowcake, and it just cut quota.",
+        source: "SOURCE: Kazatomprom guidance · illustrative",
+      },
+    ],
+    fatFinger: {
+      headline: "A power trader sold a gigawatt he meant to sell a megawatt.",
+      body: "One slipped decimal turned a routine 1 MW offer into 1,000 MW, briefly putting a regional grid short an entire mid-sized city. Risk yanked the trade in minutes. The nickname will outlive the desk.",
+      take: "Three zeros: the gap between a fill and a folk tale.",
+      source: "SOURCE: a control room that asked to stay anonymous",
+    },
+    chart: {
+      type: "line",
+      title: "Uranium spot, 12 sessions (up 19%)",
+      take: "Demand showed up a decade before the supply did.",
+      source: "SOURCE: UxC weekly spot · illustrative",
+      data: [
+        { d: "May 22", px: 87.5 },
+        { d: "May 23", px: 88.2 },
+        { d: "May 27", px: 89.0 },
+        { d: "May 28", px: 90.4 },
+        { d: "May 29", px: 91.1 },
+        { d: "May 30", px: 93.0 },
+        { d: "Jun 2", px: 94.8 },
+        { d: "Jun 3", px: 96.5 },
+        { d: "Jun 4", px: 98.2 },
+        { d: "Jun 5", px: 99.9 },
+        { d: "Jun 6", px: 101.0 },
+        { d: "Jun 8", px: 104.2 },
+      ],
+      xKey: "d",
+      yKey: "px",
+      highlightIndex: 11,
+      markerLabel: "$104.20",
+      valuePrefix: "$",
+      valueDecimals: 0,
+    },
+    signOff:
+      "That's the tape. The future is electric, and electricity still needs fuel. Forward this to the colleague who thinks nuclear is a 1980s problem.",
+  },
+
   // ───────────────────────────────────────────────────────────── Issue 1
   {
     slug: "opec-rounding-error",
