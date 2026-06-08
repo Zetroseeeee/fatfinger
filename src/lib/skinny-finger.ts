@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Issue } from "@/content/issues";
 import { normalizeChart, type RawChart } from "./chart-gen";
+import { buildMarketChart } from "./market-data";
 
 /**
  * The Skinny Finger Engine - Fat Finger's proprietary morning writer.
@@ -56,6 +57,7 @@ STRUCTURE you must fill (this maps to the JSON schema):
 - energy: 1 to 2 commodities/energy items (the signature section), each with a short body and a take.
 - fatFinger: the funny/weird item of the day, with a take.
 - chart: ONE chart that visualises the issue's most chartable story (usually the Big Slip or the lead energy move). Use line or area for a trend over time, bar to compare across a few categories. Give 8 to 12 data points (x = a short label like a date or month, y = a number) that genuinely move and tell the story; never flatline. highlightIndex points to the single number the story is about, almost always the latest point. Title names the instrument (e.g. "Brent crude" or "Henry Hub gas"); the take says what the move means. Set valuePrefix ("$"), valueSuffix ("%"), and valueDecimals to fit the data, and give a short markerLabel for the highlighted point.
+- chartSymbol: if the lead story is about a market we can pull live (Brent oil, WTI, US nat gas, gold, S&P 500, Nasdaq, the US dollar, Bitcoin or Ethereum), set chartSymbol to the matching code: BRENT, WTI, NATGAS, GOLD, SP500, NASDAQ, DOLLAR, BTC, or ETH. We then swap your illustrative chart for the REAL daily price series of that instrument, so make the chart's take and the tape consistent with a genuine recent move. If nothing fits, set chartSymbol to "" and your illustrative chart is used as-is.
 - signOff: one dry closing line.
 
 Write the whole issue now as JSON matching the schema exactly. Make it genuinely sharp - the kind of thing people forward to the desk.`;
@@ -113,8 +115,12 @@ const ISSUE_SCHEMA = obj(
       ["type", "title", "take", "source", "valuePrefix", "valueSuffix", "valueDecimals", "highlightIndex", "markerLabel", "data"]
     ),
     signOff: str,
+    chartSymbol: {
+      type: "string",
+      enum: ["BRENT", "WTI", "NATGAS", "GOLD", "SP500", "NASDAQ", "DOLLAR", "BTC", "ETH", ""],
+    },
   },
-  ["slug", "date", "preview", "mood", "tape", "bigSlip", "desk", "energy", "fatFinger", "chart", "signOff"]
+  ["slug", "date", "preview", "mood", "tape", "bigSlip", "desk", "energy", "fatFinger", "chart", "signOff", "chartSymbol"]
 );
 
 export type Packet = {
@@ -161,12 +167,23 @@ export async function writeIssue(packet: Packet): Promise<Issue> {
   }
   const raw = JSON.parse(textBlock.text) as Omit<Issue, "chart"> & {
     chart: RawChart;
+    chartSymbol?: string;
   };
-  // run the chart through the generator so it is always on-brand + correct
+  const { chartSymbol, chart: rawChart, ...rest } = raw;
+
+  // Prefer a REAL chart built from live data for the named instrument; fall back
+  // to the model's illustrative chart (still run through the generator).
+  const realChart = chartSymbol
+    ? await buildMarketChart(chartSymbol, {
+        take: rawChart?.take ?? "",
+        source: rawChart?.source ?? "",
+      })
+    : null;
+
   return {
-    ...raw,
+    ...rest,
     slug: packet.slug,
     date: packet.date,
-    chart: normalizeChart(raw.chart),
+    chart: realChart ?? normalizeChart(rawChart),
   };
 }

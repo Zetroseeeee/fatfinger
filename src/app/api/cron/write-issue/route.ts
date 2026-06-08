@@ -28,6 +28,40 @@ function displayDate(d: Date) {
   return `${day} · ${rest}`;
 }
 
+const TAPE_LABELS: Record<string, string> = {
+  SPY: "S&P 500 (SPY)",
+  QQQ: "Nasdaq 100 (QQQ)",
+  USO: "WTI oil (USO)",
+  BNO: "Brent oil (BNO)",
+  UNG: "US nat gas (UNG)",
+  GLD: "Gold (GLD)",
+  UUP: "US dollar (UUP)",
+  BTC: "Bitcoin",
+  ETH: "Ethereum",
+  SOL: "Solana",
+};
+
+/** Pull the real end-of-day tape from our own ticker feed for the packet. */
+async function fetchTape(req: Request): Promise<Packet["tape"]> {
+  try {
+    const base = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+    const r = await fetch(`${base}/api/ticker`, { cache: "no-store" });
+    if (!r.ok) return undefined;
+    const j = await r.json();
+    const ticks: { label: string; value: string; chg: string; dir: "up" | "down" }[] =
+      Array.isArray(j?.ticks) ? j.ticks : [];
+    if (!ticks.length) return undefined;
+    return ticks.map((t) => ({
+      label: TAPE_LABELS[t.label] ?? t.label,
+      value: t.value,
+      chg: t.chg,
+      dir: t.dir,
+    }));
+  } catch {
+    return undefined;
+  }
+}
+
 export async function GET(req: Request) {
   if (!authed(req)) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
@@ -41,12 +75,17 @@ export async function GET(req: Request) {
 
   const now = new Date();
   const iso = now.toISOString().slice(0, 10); // 2026-06-09
+
+  // Feed the engine the REAL tape so it writes around real numbers (and the real
+  // chart it picks via chartSymbol stays consistent with the prose).
+  const tape = await fetchTape(req);
+
   const packet: Packet = {
     date: displayDate(now),
     slug: iso,
-    // TODO: feed a real tape + news/source material (ROADMAP.md - Analysis Engine).
+    tape,
     notes:
-      "Cover the day's biggest market mover, the energy/commodities angle, a few rapid-fire desk items, one genuinely funny fat-finger market moment, and one chart. Numbers illustrative until live feeds are wired.",
+      "Cover the day's biggest market mover, the energy/commodities angle, a few rapid-fire desk items, one genuinely funny fat-finger market moment, and one chart. Lead with energy. Use the real tape above; set chartSymbol to the instrument whose live price best tells the lead story.",
   };
 
   try {

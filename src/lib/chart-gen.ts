@@ -134,3 +134,31 @@ export function normalizeChart(raw: Partial<RawChart> | undefined): FatFingerCha
     valueDecimals: decimals,
   };
 }
+
+/** trailing simple moving average; null until `window` points exist */
+export function sma(values: number[], window: number): (number | null)[] {
+  return values.map((_, i) => {
+    if (i < window - 1) return null;
+    let s = 0;
+    for (let k = i - window + 1; k <= i; k++) s += values[k];
+    return s / window;
+  });
+}
+
+/**
+ * Layer a muted moving-average context line behind the price series - the
+ * "specialized" technical layer that turns a price line into real analysis.
+ * No-op for bar charts or series too short to average meaningfully.
+ */
+export function withContextMA(
+  chart: FatFingerChartProps,
+  window = 4
+): FatFingerChartProps {
+  if (chart.type === "bar" || chart.data.length < window + 1) return chart;
+  const ys = chart.data.map((d) => Number(d[chart.yKey]));
+  const ma = sma(ys, window);
+  const data = chart.data.map((d, i) =>
+    ma[i] == null ? d : { ...d, _ma: Number((ma[i] as number).toFixed(4)) }
+  );
+  return { ...chart, data, contextKey: "_ma" };
+}

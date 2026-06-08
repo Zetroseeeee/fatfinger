@@ -1,4 +1,5 @@
 import type { FatFingerChartProps } from "@/components/charts/fat-finger-chart";
+import { withContextMA } from "@/lib/chart-gen";
 
 /**
  * Sample newsletter issues - real, in-voice Fat Finger copy (EDITORIAL.md §4–5).
@@ -112,7 +113,7 @@ export const ISSUES: Issue[] = [
       take: "Three zeros: the gap between a fill and a folk tale.",
       source: "SOURCE: a control room that asked to stay anonymous",
     },
-    chart: {
+    chart: withContextMA({
       type: "line",
       title: "Uranium spot, 12 sessions (up 19%)",
       take: "Demand showed up a decade before the supply did.",
@@ -137,7 +138,7 @@ export const ISSUES: Issue[] = [
       markerLabel: "$104.20",
       valuePrefix: "$",
       valueDecimals: 0,
-    },
+    }, 4),
     signOff:
       "That's the tape. The future is electric, and electricity still needs fuel. Forward this to the colleague who thinks nuclear is a 1980s problem.",
   },
