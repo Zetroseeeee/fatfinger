@@ -1,4 +1,4 @@
-import { FatFingerChart } from "@/components/charts/fat-finger-chart";
+import { LazyFatFingerChart as FatFingerChart } from "@/components/charts/lazy-fat-finger-chart";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { Reveal } from "@/components/ui/reveal";
 

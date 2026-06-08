@@ -53,7 +53,7 @@ export function SiteNav() {
         </div>
 
         <MagneticButton
-          href="https://fatfinger.news"
+          href="/subscribe"
           variant="ink"
           className="px-5 py-2"
         >

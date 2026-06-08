@@ -1,4 +1,4 @@
-import { FatFingerChart } from "@/components/charts/fat-finger-chart";
+import { LazyFatFingerChart as FatFingerChart } from "@/components/charts/lazy-fat-finger-chart";
 import type { Issue } from "@/content/issues";
 
 /**
@@ -172,7 +172,7 @@ export function NewsletterIssue({ issue }: { issue: Issue }) {
           {issue.signOff}
         </p>
         <a
-          href="https://fatfinger.news"
+          href="https://fatfinger.news/subscribe"
           className="mt-5 inline-flex items-center justify-center rounded-full bg-signal px-7 py-3 font-mono text-[12px] uppercase tracking-[0.16em] text-[#f5f5f6] transition-transform hover:-translate-y-0.5"
         >
           Subscribe free →

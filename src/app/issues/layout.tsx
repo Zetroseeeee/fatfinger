@@ -24,7 +24,7 @@ export default function IssuesLayout({
               ← Home
             </TransitionLink>
             <MagneticButton
-              href="https://fatfinger.news"
+              href="/subscribe"
               variant="ink"
               className="px-5 py-2"
             >

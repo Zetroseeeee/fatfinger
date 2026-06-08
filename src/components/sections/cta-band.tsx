@@ -46,7 +46,7 @@ export function CtaBand() {
             </p>
             <div className="mt-9 flex justify-center">
               <MagneticButton
-                href="https://fatfinger.news"
+                href="/subscribe"
                 variant="ink"
                 className="px-8 py-3.5 text-[13px]"
               >

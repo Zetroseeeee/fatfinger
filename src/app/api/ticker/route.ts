@@ -68,7 +68,7 @@ async function cryptoTicks(): Promise<Tick[]> {
     const ids = COINS.map((c) => c.id).join(",");
     const r = await fetch(
       `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,
-      { headers: { Accept: "application/json" }, next: { revalidate: 30 } }
+      { headers: { Accept: "application/json" }, next: { revalidate: 45 } }
     );
     if (!r.ok) throw new Error(String(r.status));
     const j = await r.json();
@@ -83,31 +83,66 @@ async function cryptoTicks(): Promise<Tick[]> {
   }
 }
 
-// ── Macro via Yahoo (sequential, best-effort) ─────────────────────────────
+// ── Macro symbols (Yahoo symbol + Twelve Data symbol + curated fallback) ──
 type Macro = {
   label: string;
-  symbol: string;
+  symbol: string; // Yahoo
+  td: string; // Twelve Data
   decimals: number;
   prefix?: string;
   suffix?: string;
   fb: { v: number; c: number };
 };
 
+// Liquid ETF proxies — real traded instruments, live on Twelve Data's free
+// tier (indices/commodities themselves are paid-only). SPY=S&P 500, QQQ=Nasdaq
+// 100, USO=WTI oil, BNO=Brent, GLD=gold, UNG=nat gas, UUP=US dollar. Yahoo and
+// Twelve Data share the same ticker for ETFs.
 const MACRO: Macro[] = [
-  { label: "S&P 500", symbol: "^GSPC", decimals: 0, fb: { v: 5431, c: 0.34 } },
-  { label: "Nasdaq", symbol: "^IXIC", decimals: 0, fb: { v: 19004, c: 0.61 } },
-  { label: "Dow", symbol: "^DJI", decimals: 0, fb: { v: 38778, c: -0.41 } },
-  { label: "WTI", symbol: "CL=F", decimals: 2, prefix: "$", fb: { v: 71.2, c: -2.1 } },
-  { label: "Brent", symbol: "BZ=F", decimals: 2, prefix: "$", fb: { v: 74.65, c: -1.88 } },
-  { label: "Gold", symbol: "GC=F", decimals: 0, prefix: "$", fb: { v: 2331, c: 0.3 } },
-  { label: "Nat Gas", symbol: "NG=F", decimals: 2, prefix: "$", fb: { v: 2.85, c: 1.2 } },
-  { label: "US 10Y", symbol: "^TNX", decimals: 2, suffix: "%", fb: { v: 4.28, c: -0.7 } },
-  { label: "DXY", symbol: "DX-Y.NYB", decimals: 2, fb: { v: 104.6, c: 0.21 } },
+  { label: "SPY", symbol: "SPY", td: "SPY", decimals: 2, prefix: "$", fb: { v: 744.99, c: 1.01 } },
+  { label: "QQQ", symbol: "QQQ", td: "QQQ", decimals: 2, prefix: "$", fb: { v: 722.65, c: 2.49 } },
+  { label: "USO", symbol: "USO", td: "USO", decimals: 2, prefix: "$", fb: { v: 135.36, c: 1.76 } },
+  { label: "BNO", symbol: "BNO", td: "BNO", decimals: 2, prefix: "$", fb: { v: 52.15, c: 1.86 } },
+  { label: "GLD", symbol: "GLD", td: "GLD", decimals: 2, prefix: "$", fb: { v: 397.84, c: 0.4 } },
+  { label: "UNG", symbol: "UNG", td: "UNG", decimals: 2, prefix: "$", fb: { v: 11.28, c: -3.38 } },
+  { label: "UUP", symbol: "UUP", td: "UUP", decimals: 2, prefix: "$", fb: { v: 28.0, c: -0.07 } },
 ];
+
+const macroFb = (m: Macro) =>
+  tick(m.label, m.fb.v, m.fb.c, m.decimals, false, m.prefix, m.suffix);
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function macroTicks(): Promise<Tick[]> {
+// ── Macro via Twelve Data (keyed, batched, works from datacenter IPs) ──────
+// Free key (800 req/day, 8/min) at twelvedata.com. One request for all symbols.
+async function twelveDataMacro(key: string): Promise<Tick[]> {
+  try {
+    const syms = MACRO.map((m) => m.td).join(",");
+    const r = await fetch(
+      `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(
+        syms
+      )}&apikey=${key}`,
+      // 15-min cache: 7 symbols × ~96 calls/day = ~672 credits, under the
+      // free tier's 800/day. Crypto stays fresher (CoinGecko, 45s).
+      { next: { revalidate: 900 } }
+    );
+    if (!r.ok) return MACRO.map(macroFb);
+    const j = await r.json();
+    // batch → { "GSPC": {...}, ... }; single symbol → the quote object itself
+    return MACRO.map((m) => {
+      const q = j?.[m.td] ?? (j?.symbol === m.td ? j : null);
+      const price = q ? parseFloat(q.close) : NaN;
+      const chg = q ? parseFloat(q.percent_change) : NaN;
+      if (!q || Number.isNaN(price) || Number.isNaN(chg)) return macroFb(m);
+      return tick(m.label, price, chg, m.decimals, true, m.prefix, m.suffix);
+    });
+  } catch {
+    return MACRO.map(macroFb);
+  }
+}
+
+// ── Macro via Yahoo (keyless, sequential, blocked on most datacenter IPs) ──
+async function yahooMacro(): Promise<Tick[]> {
   const out: Tick[] = [];
   for (const m of MACRO) {
     let done: Tick | null = null;
@@ -141,23 +176,26 @@ async function macroTicks(): Promise<Tick[]> {
     } catch {
       /* fall through to fallback */
     }
-    out.push(
-      done ??
-        tick(m.label, m.fb.v, m.fb.c, m.decimals, false, m.prefix, m.suffix)
-    );
+    out.push(done ?? macroFb(m));
     await sleep(120); // be gentle - avoid Yahoo's burst rate limit
   }
   return out;
 }
 
 export async function GET() {
-  const [crypto, macro] = await Promise.all([cryptoTicks(), macroTicks()]);
-  // interleave a little so crypto isn't all clumped at the end
+  // Prefer the keyed feed (reliable in prod); fall back to Yahoo (works locally).
+  const key = process.env.MARKET_DATA_API_KEY;
+  const [crypto, macro] = await Promise.all([
+    cryptoTicks(),
+    key ? twelveDataMacro(key) : yahooMacro(),
+  ]);
+  // interleave so crypto isn't clumped; lead with equities, energy up front
   const ticks: Tick[] = [
-    macro[0], macro[1], macro[2], // indices
-    macro[3], macro[4], macro[5], macro[6], // energy + metals
-    crypto[0], crypto[1], crypto[2], // crypto
-    macro[7], macro[8], // rates + dollar
+    macro[0], macro[1], // SPY, QQQ
+    macro[2], macro[3], macro[5], // USO, BNO, UNG (energy)
+    macro[4], // GLD
+    crypto[0], crypto[1], crypto[2], // BTC, ETH, SOL
+    macro[6], // UUP
   ].filter(Boolean);
 
   return NextResponse.json(

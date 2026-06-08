@@ -14,19 +14,18 @@ import { cn } from "@/lib/utils";
 
 type Tick = { sym: string; px: string; chg: string; dir: "up" | "down" };
 
-// initial paint / fallback (matches the API's symbol set + fallbacks)
+// initial paint / fallback (matches the API's symbol set + order)
 const SEED: Tick[] = [
-  { sym: "S&P 500", px: "5,431", chg: "+0.34%", dir: "up" },
-  { sym: "Nasdaq", px: "19,004", chg: "+0.61%", dir: "up" },
-  { sym: "Dow", px: "38,778", chg: "-0.41%", dir: "down" },
-  { sym: "WTI", px: "$71.20", chg: "-2.10%", dir: "down" },
-  { sym: "Brent", px: "$74.65", chg: "-1.88%", dir: "down" },
-  { sym: "Gold", px: "$2,331", chg: "+0.30%", dir: "up" },
-  { sym: "Nat Gas", px: "$2.85", chg: "+1.20%", dir: "up" },
+  { sym: "SPY", px: "$744.99", chg: "+1.01%", dir: "up" },
+  { sym: "QQQ", px: "$722.65", chg: "+2.49%", dir: "up" },
+  { sym: "USO", px: "$135.36", chg: "+1.76%", dir: "up" },
+  { sym: "BNO", px: "$52.15", chg: "+1.86%", dir: "up" },
+  { sym: "UNG", px: "$11.28", chg: "-3.38%", dir: "down" },
+  { sym: "GLD", px: "$397.84", chg: "+0.40%", dir: "up" },
   { sym: "BTC", px: "$63,800", chg: "+2.50%", dir: "up" },
   { sym: "ETH", px: "$1,686", chg: "+3.10%", dir: "up" },
-  { sym: "US 10Y", px: "4.28%", chg: "-0.70%", dir: "down" },
-  { sym: "DXY", px: "104.60", chg: "+0.21%", dir: "up" },
+  { sym: "SOL", px: "$67.03", chg: "+3.46%", dir: "up" },
+  { sym: "UUP", px: "$28.00", chg: "-0.07%", dir: "down" },
 ];
 
 function TickItem({ t }: { t: Tick }) {

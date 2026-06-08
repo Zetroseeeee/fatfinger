@@ -87,7 +87,7 @@ export function Hero() {
 
               <RevealItem>
                 <div className="mt-9 flex flex-wrap items-center gap-4">
-                  <MagneticButton href="https://fatfinger.news" variant="red">
+                  <MagneticButton href="/subscribe" variant="red">
                     Subscribe, it&apos;s free
                   </MagneticButton>
                   <MagneticButton href="/issues" variant="ghost">

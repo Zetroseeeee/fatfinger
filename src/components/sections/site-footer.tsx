@@ -28,7 +28,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Subscribe",
     links: [
-      { label: "Daily email", href: "https://fatfinger.news" },
+      { label: "Daily email", href: "/subscribe" },
       { label: "Instagram", href: "https://instagram.com/fatfinger" },
       { label: "X / @fatfinger", href: "https://x.com/fatfinger" },
     ],
