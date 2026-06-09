@@ -22,15 +22,23 @@ export const metadata: Metadata = {
 const pct = (n: number, d: number) => (d > 0 ? `${((n / d) * 100).toFixed(1)}%` : "—");
 const fmtDate = (s: string) => (s ? s.slice(0, 10) : "");
 
+/** never let one slow query hang the dashboard - fall back after `ms` */
+function withTimeout<T>(p: Promise<T>, fallback: T, ms = 7000): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 export default async function AdminPage() {
   if (!(await isAdmin())) redirect("/admin/login");
 
   const [bd, recent, ab, sources, winner] = await Promise.all([
-    getSubscriberBreakdown(),
-    getRecentSubscribers(50),
-    getAbStats(),
-    getSignupsBySource(),
-    getDecision("site"),
+    withTimeout(getSubscriberBreakdown(), { confirmed: 0, pending: 0, unsubscribed: 0, total: 0 }),
+    withTimeout(getRecentSubscribers(50), []),
+    withTimeout(getAbStats(), []),
+    withTimeout(getSignupsBySource(), []),
+    withTimeout(getDecision("site"), null),
   ]);
   const byBucket: Record<string, AbRow> = {};
   for (const r of ab) byBucket[r.bucket] = r;
