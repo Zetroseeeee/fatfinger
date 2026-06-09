@@ -94,6 +94,26 @@ body {
   box-shadow: 4px 4px 0 0 var(--color-ink);
 }
 
+/* Reading surface theme (issue pages): dark by default, toggle to light.
+   The chart panels stay dark on purpose (the "terminal inset" look). */
+.ff-read {
+  --rd-bg: #0a0b0d;
+  --rd-text: #f4f4f5;
+  --rd-body: #d8d9dc;
+  --rd-muted: #8b9099;
+  --rd-line: rgba(255, 255, 255, 0.1);
+  background: var(--rd-bg);
+  color: var(--rd-text);
+  transition: background 0.25s ease, color 0.25s ease;
+}
+.ff-read.light {
+  --rd-bg: #f7f5ef;
+  --rd-text: #0a0b0d;
+  --rd-body: #34363c;
+  --rd-muted: #6b6e76;
+  --rd-line: rgba(10, 11, 13, 0.12);
+}
+
 ::selection {
   background: var(--color-ink);
   color: var(--color-paper);

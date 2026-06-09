@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAllIssues, resolveIssue } from "@/lib/issues";
+import { narrate } from "@/lib/narrate";
 import { NewsletterIssue } from "@/components/newsletter/newsletter-issue";
+import { ReadingShell } from "@/components/newsletter/reading-shell";
 import { TransitionLink } from "@/components/ui/page-transition";
 
 // render on demand so auto-published issues are always available + current
@@ -34,14 +36,14 @@ export default async function IssuePage({
   const prev = all[idx + 1];
   const next = all[idx - 1];
 
-  // Full-bleed dark reading band: the page IS the dark surface, with one
-  // centered, comfortable reading column. No floating card to mis-center.
+  // Themeable reading surface (dark by default, toggle to light) with one
+  // centered reading column and floating Listen + theme controls.
   return (
-    <div className="bg-[#0a0b0d] text-[#f5f5f6]">
+    <ReadingShell slug={issue.slug} narration={narrate(issue)}>
       <div className="mx-auto max-w-2xl px-5 py-10 sm:px-8 sm:py-14">
         <TransitionLink
           href="/issues"
-          className="font-mono text-[11px] uppercase tracking-[0.16em] text-[#8b9099] transition-colors hover:text-[#f5f5f6]"
+          className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--rd-muted)] transition-colors hover:text-[var(--rd-text)]"
         >
           ← All issues
         </TransitionLink>
@@ -51,11 +53,11 @@ export default async function IssuePage({
         </div>
 
         {/* prev / next */}
-        <nav className="mt-14 flex items-center justify-between gap-4 border-t border-white/10 pt-7 font-mono text-[11px] uppercase tracking-[0.14em]">
+        <nav className="mt-14 flex items-center justify-between gap-4 border-t border-[var(--rd-line)] pt-7 font-mono text-[11px] uppercase tracking-[0.14em]">
           {prev ? (
             <TransitionLink
               href={`/issues/${prev.slug}`}
-              className="text-[#8b9099] transition-colors hover:text-[#f5f5f6]"
+              className="text-[var(--rd-muted)] transition-colors hover:text-[var(--rd-text)]"
             >
               ← {prev.date}
             </TransitionLink>
@@ -65,7 +67,7 @@ export default async function IssuePage({
           {next ? (
             <TransitionLink
               href={`/issues/${next.slug}`}
-              className="text-[#8b9099] transition-colors hover:text-[#f5f5f6]"
+              className="text-[var(--rd-muted)] transition-colors hover:text-[var(--rd-text)]"
             >
               {next.date} →
             </TransitionLink>
@@ -74,6 +76,6 @@ export default async function IssuePage({
           )}
         </nav>
       </div>
-    </div>
+    </ReadingShell>
   );
 }

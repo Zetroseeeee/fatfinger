@@ -37,7 +37,7 @@ function SectionHeader({
   return (
     <div className="mb-6 mt-14 flex items-baseline gap-3">
       <span className="font-mono text-[12px] font-medium text-signal">{index}</span>
-      <h2 className="font-display text-[1.7rem] uppercase leading-none tracking-tight text-[#f5f5f6] sm:text-[2rem]">
+      <h2 className="font-display text-[1.7rem] uppercase leading-none tracking-tight text-[var(--rd-text)] sm:text-[2rem]">
         {title}
       </h2>
       {badge ? (
@@ -45,7 +45,7 @@ function SectionHeader({
           {badge}
         </span>
       ) : null}
-      <span className="ml-1 h-px flex-1 self-center bg-white/10" />
+      <span className="ml-1 h-px flex-1 self-center bg-[var(--rd-line)]" />
     </div>
   );
 }
@@ -56,7 +56,7 @@ function Take({ children }: { children: React.ReactNode }) {
       <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-signal">
         The take
       </p>
-      <p className="mt-1.5 text-[17px] font-medium italic leading-snug text-[#f5f5f6]">
+      <p className="mt-1.5 text-[17px] font-medium italic leading-snug text-[var(--rd-text)]">
         {children}
       </p>
     </div>
@@ -65,7 +65,7 @@ function Take({ children }: { children: React.ReactNode }) {
 
 function Source({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[#7c8088]">
+    <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--rd-muted)]">
       {children}
     </p>
   );
@@ -77,48 +77,48 @@ export function NewsletterIssue({ issue }: { issue: Issue }) {
   return (
     <article className="w-full">
       {/* 1 - MASTHEAD + STANDFIRST */}
-      <header className="border-b border-white/10 pb-8">
+      <header className="border-b border-[var(--rd-line)] pb-8">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="font-body text-2xl font-bold lowercase tracking-[-0.03em] text-[#f5f5f6]">
+          <span className="font-body text-2xl font-bold lowercase tracking-[-0.03em] text-[var(--rd-text)]">
             fatfinger<span className="text-signal">.</span>
           </span>
-          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#8b9099]">
+          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--rd-muted)]">
             {issue.date}
           </span>
         </div>
 
         {/* the standfirst - a magazine intro line, sets up the issue */}
-        <p className="mt-7 text-balance text-[20px] leading-snug text-[#e8e9ec] sm:text-[23px]">
+        <p className="mt-7 text-balance text-[20px] leading-snug text-[var(--rd-text)] sm:text-[23px]">
           {issue.preview}
         </p>
 
         {/* byline / meta */}
-        <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[#8b9099]">
+        <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--rd-muted)]">
           <span>Fat Finger desk</span>
-          <span className="text-white/20">·</span>
+          <span className="text-[var(--rd-muted)]">·</span>
           <span>{mins} min read</span>
-          <span className="text-white/20">·</span>
+          <span className="text-[var(--rd-muted)]">·</span>
           <span>
-            Mood: <span className="text-[#f5f5f6]">{issue.mood}</span>
+            Mood: <span className="text-[var(--rd-text)]">{issue.mood}</span>
           </span>
         </div>
       </header>
 
       {/* 2 - THE TAPE */}
       <SectionHeader index="01" title="The Tape" />
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-[var(--rd-line)] bg-[var(--rd-line)]">
         {issue.tape.map((t) => {
           const up = t.dir === "up";
           return (
             <div
               key={t.label}
-              className="flex items-baseline justify-between gap-2 bg-[#0a0b0d] px-3.5 py-3"
+              className="flex items-baseline justify-between gap-2 bg-[var(--rd-bg)] px-3.5 py-3"
             >
-              <span className="min-w-0 truncate font-mono text-[11px] uppercase tracking-[0.1em] text-[#8b9099]">
+              <span className="min-w-0 truncate font-mono text-[11px] uppercase tracking-[0.1em] text-[var(--rd-muted)]">
                 {t.label}
               </span>
               <span className="flex items-baseline gap-1.5 whitespace-nowrap font-mono text-[12px] tabular-nums">
-                <span className="text-[#f5f5f6]">{t.value}</span>
+                <span className="text-[var(--rd-text)]">{t.value}</span>
                 <span className={up ? "text-up" : "text-signal"}>
                   {up ? "▲" : "▼"} {t.chg}
                 </span>
@@ -133,7 +133,7 @@ export function NewsletterIssue({ issue }: { issue: Issue }) {
       <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-signal">
         {issue.bigSlip.kicker}
       </p>
-      <h3 className="mt-3 font-display text-[clamp(1.9rem,7vw,2.9rem)] uppercase leading-[0.95] text-[#f5f5f6]">
+      <h3 className="mt-3 font-display text-[clamp(1.9rem,7vw,2.9rem)] uppercase leading-[0.95] text-[var(--rd-text)]">
         {issue.bigSlip.headline}
       </h3>
       <div className="mt-5 space-y-4">
@@ -142,8 +142,8 @@ export function NewsletterIssue({ issue }: { issue: Issue }) {
             key={i}
             className={
               i === 0
-                ? "text-[16px] leading-relaxed text-[#dcdde0] first-letter:float-left first-letter:mr-2.5 first-letter:mt-1 first-letter:font-display first-letter:text-[3.4rem] first-letter:leading-[0.7] first-letter:text-signal"
-                : "text-[16px] leading-relaxed text-[#dcdde0]"
+                ? "text-[16px] leading-relaxed text-[var(--rd-body)] first-letter:float-left first-letter:mr-2.5 first-letter:mt-1 first-letter:font-display first-letter:text-[3.4rem] first-letter:leading-[0.7] first-letter:text-signal"
+                : "text-[16px] leading-relaxed text-[var(--rd-body)]"
             }
           >
             {p}
@@ -162,10 +162,10 @@ export function NewsletterIssue({ issue }: { issue: Issue }) {
               {String(i + 1).padStart(2, "0")}
             </span>
             <div className="min-w-0">
-              <p className="text-[16px] font-medium leading-snug text-[#f5f5f6]">
+              <p className="text-[16px] font-medium leading-snug text-[var(--rd-text)]">
                 {d.headline}
               </p>
-              <p className="mt-1 text-[14px] leading-snug text-[#9398a0]">
+              <p className="mt-1 text-[14px] leading-snug text-[var(--rd-muted)]">
                 {d.take}
               </p>
             </div>
@@ -178,10 +178,10 @@ export function NewsletterIssue({ issue }: { issue: Issue }) {
       <div className="space-y-8">
         {issue.energy.map((e, i) => (
           <div key={i}>
-            <h4 className="font-display text-xl uppercase leading-tight text-[#f5f5f6]">
+            <h4 className="font-display text-xl uppercase leading-tight text-[var(--rd-text)]">
               {e.headline}
             </h4>
-            <p className="mt-2.5 text-[16px] leading-relaxed text-[#dcdde0]">
+            <p className="mt-2.5 text-[16px] leading-relaxed text-[var(--rd-body)]">
               {e.body}
             </p>
             <Take>{e.take}</Take>
@@ -193,10 +193,10 @@ export function NewsletterIssue({ issue }: { issue: Issue }) {
       {/* 6 - FAT FINGER OF THE DAY */}
       <SectionHeader index="05" title="Fat Finger of the Day" />
       <div className="rounded-2xl border border-signal/30 bg-signal/[0.06] p-6">
-        <h4 className="font-display text-xl uppercase leading-tight text-[#f5f5f6]">
+        <h4 className="font-display text-xl uppercase leading-tight text-[var(--rd-text)]">
           {issue.fatFinger.headline}
         </h4>
-        <p className="mt-2.5 text-[16px] leading-relaxed text-[#dcdde0]">
+        <p className="mt-2.5 text-[16px] leading-relaxed text-[var(--rd-body)]">
           {issue.fatFinger.body}
         </p>
         <Take>{issue.fatFinger.take}</Take>
@@ -208,34 +208,34 @@ export function NewsletterIssue({ issue }: { issue: Issue }) {
       <FatFingerChart {...issue.chart} />
 
       {/* 8 - SIGN-OFF */}
-      <div className="mt-14 border-t border-white/10 pt-8 text-center">
-        <p className="mx-auto max-w-md text-[16px] leading-relaxed text-[#dcdde0]">
+      <div className="mt-14 border-t border-[var(--rd-line)] pt-8 text-center">
+        <p className="mx-auto max-w-md text-[16px] leading-relaxed text-[var(--rd-body)]">
           {issue.signOff}
         </p>
         <a
           href="https://fatfinger.news/subscribe"
-          className="mt-6 mx-auto flex w-fit items-center justify-center rounded-full bg-signal px-7 py-3 font-mono text-[12px] uppercase tracking-[0.16em] text-[#f5f5f6] transition-transform hover:-translate-y-0.5"
+          className="mt-6 mx-auto flex w-fit items-center justify-center rounded-full bg-signal px-7 py-3 font-mono text-[12px] uppercase tracking-[0.16em] text-[var(--rd-text)] transition-transform hover:-translate-y-0.5"
         >
           Subscribe free →
         </a>
       </div>
 
       {/* footer */}
-      <footer className="mt-10 flex flex-col items-center gap-3 border-t border-white/10 pt-7 text-center">
-        <span className="font-body text-lg font-bold lowercase tracking-[-0.03em] text-[#f5f5f6]">
+      <footer className="mt-10 flex flex-col items-center gap-3 border-t border-[var(--rd-line)] pt-7 text-center">
+        <span className="font-body text-lg font-bold lowercase tracking-[-0.03em] text-[var(--rd-text)]">
           fatfinger<span className="text-signal">.</span>
         </span>
-        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#8b9099]">
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--rd-muted)]">
           Not investment advice · Illustrative data only
         </p>
-        <div className="flex gap-4 font-mono text-[10px] uppercase tracking-[0.16em] text-[#8b9099]">
-          <a className="hover:text-[#f5f5f6]" href="#">
+        <div className="flex gap-4 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--rd-muted)]">
+          <a className="hover:text-[var(--rd-text)]" href="#">
             X / @fatfinger
           </a>
-          <a className="hover:text-[#f5f5f6]" href="#">
+          <a className="hover:text-[var(--rd-text)]" href="#">
             Instagram
           </a>
-          <a className="hover:text-[#f5f5f6]" href="#">
+          <a className="hover:text-[var(--rd-text)]" href="#">
             LinkedIn
           </a>
         </div>
