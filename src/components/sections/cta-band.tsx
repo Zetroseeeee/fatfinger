@@ -37,12 +37,12 @@ export function CtaBand() {
             <h2 className="font-display text-[clamp(2.5rem,8vw,6rem)] leading-[0.9] text-paper">
               Don&apos;t read the market.
               <br />
-              Get the slip that moves it
+              Beat it to the open
               <span className="text-ink">.</span>
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-paper/85">
-              Join traders, analysts, and the merely curious. One email
-              every market morning. Unsubscribe anytime.
+              For traders, analysts, and the merely curious. One email,
+              every market morning.
             </p>
             <div className="mt-9 flex justify-center">
               <MagneticButton

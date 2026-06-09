@@ -48,7 +48,7 @@ const CARDS: Card[] = [
   {
     kicker: "01 / The chart",
     title: "One chart. One point. In red.",
-    body: "Every issue gets a single chart where everything is muted except the one number the story is about. Your eye goes straight to it. No spaghetti, no decoration.",
+    body: "One chart per issue. Everything muted except the number the story's about. Your eye goes straight to it. No spaghetti, no decoration.",
     span: "md:col-span-2",
     accent: "signal",
     chart: (
@@ -71,7 +71,7 @@ const CARDS: Card[] = [
   {
     kicker: "02 / No gatekeeping",
     title: "Bloomberg-grade, not Bloomberg-priced",
-    body: "Finance media is either dumbed-down memes or rigour locked behind a $24,000 terminal. We do both, and charge nothing for the daily.",
+    body: "Finance media is either dumbed-down memes or rigour locked behind a £24,000 terminal. We do both, and charge nothing for the daily.",
     span: "",
     accent: "electric",
     footer: (
@@ -89,7 +89,7 @@ const CARDS: Card[] = [
   },
   {
     kicker: "03 / The take",
-    title: "Every story ends with the 'so what'",
+    title: "Every story ends with the take",
     body: "One closing line that tells you what it actually means. The kind of analogy you'll repeat at the desk:",
     span: "",
     accent: "ink",
@@ -107,7 +107,7 @@ const CARDS: Card[] = [
   {
     kicker: "04 / The home beat",
     title: "Energy, covered harder than anyone",
-    body: "Oil, gas, power, metals, and the money moving them. The beat nobody else runs, decoded with quant rigour and written in plain English.",
+    body: "Oil, gas, power, metals, and the money moving them. The beat nobody else runs. Quant rigour, plain English.",
     span: "md:col-span-2",
     accent: "up",
     chart: (

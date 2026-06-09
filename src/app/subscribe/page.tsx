@@ -39,7 +39,7 @@ const TIERS: Tier[] = [
     name: "The Terminal",
     price: "£19.99",
     cadence: "/ month",
-    blurb: "For traders. The numbers behind every market move.",
+    blurb: "For traders who act before the open.",
     accent: "electric",
     state: "soon",
     features: [
@@ -54,7 +54,7 @@ const TIERS: Tier[] = [
     name: "The Whole Desk",
     price: "£49.99",
     cadence: "/ month",
-    blurb: "For your whole desk. Deep dives, raw data, and API access.",
+    blurb: "Built for a whole team, not one seat.",
     accent: "signal",
     state: "soon",
     features: [
@@ -62,7 +62,7 @@ const TIERS: Tier[] = [
       "Same-day deep dives on the trade that moved the market",
       "Raw data feeds + API access",
       "Private community + analyst Q&A",
-      "Priority everything",
+      "Direct line to the desk",
     ],
   },
 ];
@@ -103,9 +103,9 @@ export default function SubscribePage() {
             Pick your plan.
           </h1>
           <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-ink-soft sm:text-lg">
-            The daily brief is free and always will be. The paid plans add deeper
-            quant analysis, the full energy coverage, and the raw data behind
-            every call. Start free now, upgrade when the paid plans open.
+            The daily brief is free, forever. Paid plans add deeper quant, the
+            full energy desk, and the raw data behind every call. Start free,
+            upgrade when they open.
           </p>
         </div>
 

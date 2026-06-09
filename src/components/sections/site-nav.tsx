@@ -14,9 +14,9 @@ import { cn } from "@/lib/utils";
  * into an animated hamburger → slide-down menu.
  */
 const LINKS = [
-  { label: "Why", href: "/#why" },
+  { label: "Why us", href: "/#why" },
   { label: "Charts", href: "/#chart" },
-  { label: "The Brief", href: "/issues" },
+  { label: "Issues", href: "/issues" },
 ];
 
 export function SiteNav() {

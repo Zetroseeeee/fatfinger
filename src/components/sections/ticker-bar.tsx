@@ -88,7 +88,7 @@ export function TickerBar() {
         <span
           className={cn(
             "h-1.5 w-1.5 rounded-full",
-            fresh ? "bg-up" : "bg-paper/30"
+            fresh ? "bg-electric" : "bg-paper/30"
           )}
         />
         <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-paper/50">

@@ -35,7 +35,7 @@ function SectionHeader({
   badge?: string;
 }) {
   return (
-    <div className="mb-6 mt-14 flex items-center gap-3">
+    <div className="mb-6 mt-14 flex items-baseline gap-3">
       <span className="font-mono text-[12px] font-medium text-signal">{index}</span>
       <h2 className="font-display text-[1.7rem] uppercase leading-none tracking-tight text-[#f5f5f6] sm:text-[2rem]">
         {title}
@@ -45,7 +45,7 @@ function SectionHeader({
           {badge}
         </span>
       ) : null}
-      <span className="ml-1 h-px flex-1 bg-white/10" />
+      <span className="ml-1 h-px flex-1 self-center bg-white/10" />
     </div>
   );
 }
@@ -94,7 +94,7 @@ export function NewsletterIssue({ issue }: { issue: Issue }) {
 
         {/* byline / meta */}
         <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[#8b9099]">
-          <span>By the Fat Finger desk</span>
+          <span>Fat Finger desk</span>
           <span className="text-white/20">·</span>
           <span>{mins} min read</span>
           <span className="text-white/20">·</span>
@@ -114,10 +114,10 @@ export function NewsletterIssue({ issue }: { issue: Issue }) {
               key={t.label}
               className="flex items-baseline justify-between gap-2 bg-[#0a0b0d] px-3.5 py-3"
             >
-              <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-[#8b9099]">
+              <span className="min-w-0 truncate font-mono text-[11px] uppercase tracking-[0.1em] text-[#8b9099]">
                 {t.label}
               </span>
-              <span className="flex items-baseline gap-1.5 font-mono text-[12px] tabular-nums">
+              <span className="flex items-baseline gap-1.5 whitespace-nowrap font-mono text-[12px] tabular-nums">
                 <span className="text-[#f5f5f6]">{t.value}</span>
                 <span className={up ? "text-up" : "text-signal"}>
                   {up ? "▲" : "▼"} {t.chg}
@@ -214,7 +214,7 @@ export function NewsletterIssue({ issue }: { issue: Issue }) {
         </p>
         <a
           href="https://fatfinger.news/subscribe"
-          className="mt-6 inline-flex items-center justify-center rounded-full bg-signal px-7 py-3 font-mono text-[12px] uppercase tracking-[0.16em] text-[#f5f5f6] transition-transform hover:-translate-y-0.5"
+          className="mt-6 mx-auto flex w-fit items-center justify-center rounded-full bg-signal px-7 py-3 font-mono text-[12px] uppercase tracking-[0.16em] text-[#f5f5f6] transition-transform hover:-translate-y-0.5"
         >
           Subscribe free →
         </a>
@@ -226,7 +226,7 @@ export function NewsletterIssue({ issue }: { issue: Issue }) {
           fatfinger<span className="text-signal">.</span>
         </span>
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#8b9099]">
-          Not investment advice. · Illustrative data only.
+          Not investment advice · Illustrative data only
         </p>
         <div className="flex gap-4 font-mono text-[10px] uppercase tracking-[0.16em] text-[#8b9099]">
           <a className="hover:text-[#f5f5f6]" href="#">

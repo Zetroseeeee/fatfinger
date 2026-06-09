@@ -39,7 +39,7 @@ export function Hero() {
   }, []);
 
   const STATS = [
-    { value: stats.subscribers, suffix: "", label: "readers on the desk", color: "text-electric" },
+    { value: stats.subscribers, suffix: "", label: "readers", color: "text-electric" },
     { value: stats.issues, suffix: "", label: "issues published", color: "text-signal" },
     { value: stats.openRate, suffix: "%", label: "open rate, last issue", color: "text-up" },
   ];
@@ -81,7 +81,7 @@ export function Hero() {
                     words={[
                       "OIL, POWER, METALS. DECODED.",
                       "ONE TYPO THAT MOVED MILLIONS.",
-                      "BLOOMBERG'S BRAIN, A TRADER'S MOUTH.",
+                      "THE ENERGY STORY NOBODY ELSE RAN.",
                     ]}
                   />
                 </div>
@@ -89,11 +89,10 @@ export function Hero() {
 
               <RevealItem>
                 <p className="mt-7 max-w-xl text-pretty text-base leading-relaxed text-ink-soft sm:text-lg">
-                  The sharpest, wittiest read on markets, energy and macro.
-                  Decoded, not reported. Get the number that moved the market,
-                  the commodities story nobody else covers, and a sharp take that
-                  tells you what it means. Five minutes. No jargon. No
-                  gatekeeping.
+                  Markets, energy and macro, decoded. Not reported. Get the
+                  number that moved the market, the commodities story nobody
+                  else runs, and a take that tells you what it means. Five
+                  minutes, no jargon.
                 </p>
               </RevealItem>
 

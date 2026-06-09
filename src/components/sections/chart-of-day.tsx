@@ -19,8 +19,8 @@ export function ChartOfDay() {
             One chart. One point.
           </h2>
           <p className="mt-4 max-w-lg text-sm leading-relaxed text-ink-soft">
-            Two of today's stories, charted. Red marks the one number that
-            moved the market; everything else stays muted.
+            Two of today's stories, charted. Red marks the number that moved.
+            Everything else stays out of the way.
           </p>
         </Reveal>
 

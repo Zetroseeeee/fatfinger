@@ -76,7 +76,7 @@ export function SubscribeForm({
             <span className="font-mono text-[12px] text-ink-soft">
               {pendingConfirmation
                 ? "Check your inbox to confirm. First brief lands at 6:30 AM ET."
-                : "You're on the list. First brief lands at 6:30 AM ET."}
+                : "First brief lands tomorrow, 6:30 AM ET."}
             </span>
           </motion.div>
         ) : (

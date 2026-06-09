@@ -21,7 +21,7 @@ export default function IssuesIndex() {
       </h1>
       <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-soft">
         Markets, energy and macro. Decoded, not reported. Read one in five
-        minutes and sound like the smartest person on the desk. Numbers below are
+        minutes, sound like the smartest person on the desk. Numbers below are
         illustrative.
       </p>
 
@@ -30,7 +30,7 @@ export default function IssuesIndex() {
           <li key={issue.slug}>
             <TransitionLink
               href={`/issues/${issue.slug}`}
-              className="group flex flex-col gap-3 py-7 transition-colors sm:flex-row sm:items-baseline sm:gap-8"
+              className="group flex flex-col gap-3 py-7 transition-colors sm:flex-row sm:items-start sm:gap-8"
             >
               <span className="w-40 shrink-0 font-mono text-[12px] uppercase tracking-[0.16em] text-ink-soft">
                 {issue.date}

@@ -139,8 +139,8 @@ export function Showcase() {
             Three real issues, top to bottom.
           </h2>
           <p className="mt-4 max-w-lg text-sm leading-relaxed text-ink-soft">
-            This is exactly what lands in your inbox: the number that moved the
-            market, the story behind it, the take, and the receipts.
+            Exactly what lands in your inbox: the number that moved the
+            market, the story behind it, the take, the receipts.
             Scroll through three.{" "}
             <TransitionLink
               href="/issues"

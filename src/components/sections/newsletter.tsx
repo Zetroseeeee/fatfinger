@@ -63,7 +63,7 @@ export function Newsletter() {
             The desk, in your inbox
           </p>
           <h2 className="mt-4 font-display text-[clamp(2.25rem,6vw,4.5rem)] leading-[0.92] text-ink">
-            One sharp brief a day. No noise.
+            One brief a day. No noise.
           </h2>
         </Reveal>
 
@@ -84,7 +84,7 @@ export function Newsletter() {
                 <span className="font-mono text-[12px] text-ink-soft">
                   {pendingConfirmation
                     ? "Check your inbox to confirm. First brief lands at 6:30 AM ET."
-                    : "You're on the list. First brief lands at 6:30 AM ET."}
+                    : "First brief lands tomorrow, 6:30 AM ET."}
                 </span>
               </motion.div>
             ) : (

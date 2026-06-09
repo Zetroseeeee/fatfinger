@@ -30,7 +30,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     links: [
       { label: "Daily email", href: "/subscribe" },
       { label: "Instagram", href: "https://instagram.com/fatfinger" },
-      { label: "X / @fatfinger", href: "https://x.com/fatfinger" },
+      { label: "X (@fatfinger)", href: "https://x.com/fatfinger" },
     ],
   },
 ];
@@ -69,7 +69,7 @@ export function SiteFooter() {
     <footer className="bg-ink text-paper">
       <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
         <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-5">
-          <div className="md:col-span-2">
+          <div className="sm:col-span-2 md:col-span-2">
             <a
               href="#top"
               className="font-body text-3xl font-bold lowercase tracking-[-0.03em] text-paper"
@@ -78,8 +78,7 @@ export function SiteFooter() {
             </a>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-paper/60">
               Markets media for people who take their money seriously and
-              themselves less so. Quant-grade analysis, a sense of humour, no
-              gatekeeping.
+              themselves less so. Quant-grade analysis, zero gatekeeping.
             </p>
           </div>
 
