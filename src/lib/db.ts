@@ -20,6 +20,10 @@ export const sql = url
       prepare: false,
       idle_timeout: 20,
       max: 3,
+      // bound stale-connection hangs (Supabase pooler drops idle conns server-
+      // side; without this a query on a dead conn can hang ~60s) and recycle.
+      connect_timeout: 10,
+      max_lifetime: 60 * 10,
       ssl: isLocal ? false : "require",
     })
   : null;
@@ -27,26 +31,39 @@ export const sql = url
 export const hasDb = !!sql;
 
 let schemaReady = false;
+let schemaPromise: Promise<void> | null = null;
 
-/** create the subscribers table on first use (idempotent) */
+/** create the subscribers table on first use (idempotent, run-once even under
+ * concurrent callers - parallel Promise.all queries must not race the DDL). */
 async function ensureSchema() {
   if (!sql || schemaReady) return;
-  await sql`
-    create table if not exists subscribers (
-      id           uuid primary key default gen_random_uuid(),
-      email        text unique not null,
-      status       text not null default 'pending',
-      tier         text not null default 'free',
-      token        text,
-      created_at   timestamptz not null default now(),
-      confirmed_at timestamptz
-    )
-  `;
-  // A/B arm + marketing attribution + unsubscribe token (idempotent)
-  await sql`alter table subscribers add column if not exists ab text`;
-  await sql`alter table subscribers add column if not exists src jsonb`;
-  await sql`alter table subscribers add column if not exists unsub_token uuid default gen_random_uuid()`;
-  schemaReady = true;
+  const db = sql;
+  schemaPromise ??= (async () => {
+    await db`
+      create table if not exists subscribers (
+        id           uuid primary key default gen_random_uuid(),
+        email        text unique not null,
+        status       text not null default 'pending',
+        tier         text not null default 'free',
+        token        text,
+        created_at   timestamptz not null default now(),
+        confirmed_at timestamptz
+      )
+    `;
+    // Only ALTER if a column is genuinely missing. `add column if not exists`
+    // still grabs an ACCESS EXCLUSIVE lock on every call (even as a no-op),
+    // which can queue for ages behind a pooled connection - this read is lock-free.
+    const cols = await db<{ column_name: string }[]>`
+      select column_name from information_schema.columns where table_name = 'subscribers'
+    `;
+    const have = new Set(cols.map((c) => c.column_name));
+    if (!have.has("ab")) await db`alter table subscribers add column ab text`;
+    if (!have.has("src")) await db`alter table subscribers add column src jsonb`;
+    if (!have.has("unsub_token"))
+      await db`alter table subscribers add column unsub_token uuid default gen_random_uuid()`;
+    schemaReady = true;
+  })();
+  await schemaPromise;
 }
 
 /** confirmed-subscriber count; 0 when no DB or on error */
@@ -112,18 +129,23 @@ export async function getSignupsBySource(): Promise<SourceRow[]> {
 
 // ── Self-optimizing A/B: promoted winners ─────────────────────────────────
 let decisionsReady = false;
+let decisionsPromise: Promise<void> | null = null;
 async function ensureDecisions() {
   if (!sql || decisionsReady) return;
-  await sql`
-    create table if not exists ab_decisions (
-      experiment  text primary key,
-      winner      text,           -- 'a' | 'b' | null (still testing)
-      z           double precision,
-      detail      jsonb,
-      decided_at  timestamptz not null default now()
-    )
-  `;
-  decisionsReady = true;
+  const db = sql;
+  decisionsPromise ??= (async () => {
+    await db`
+      create table if not exists ab_decisions (
+        experiment  text primary key,
+        winner      text,
+        z           double precision,
+        detail      jsonb,
+        decided_at  timestamptz not null default now()
+      )
+    `;
+    decisionsReady = true;
+  })();
+  await decisionsPromise;
 }
 
 /** the promoted winner for an experiment, or null while still testing */
@@ -199,19 +221,28 @@ export async function confirmByToken(token: string): Promise<string | null> {
 
 // ── Skinny Finger Engine drafts ───────────────────────────────────────────
 let draftsReady = false;
+let draftsPromise: Promise<void> | null = null;
 async function ensureDrafts() {
   if (!sql || draftsReady) return;
-  await sql`
-    create table if not exists generated_issues (
-      slug        text primary key,
-      date        text not null,
-      data        jsonb not null,
-      status      text not null default 'published', -- draft | published
-      created_at  timestamptz not null default now()
-    )
-  `;
-  await sql`alter table generated_issues add column if not exists sent_at timestamptz`;
-  draftsReady = true;
+  const db = sql;
+  draftsPromise ??= (async () => {
+    await db`
+      create table if not exists generated_issues (
+        slug        text primary key,
+        date        text not null,
+        data        jsonb not null,
+        status      text not null default 'published',
+        created_at  timestamptz not null default now()
+      )
+    `;
+    const cols = await db<{ column_name: string }[]>`
+      select column_name from information_schema.columns where table_name = 'generated_issues'
+    `;
+    if (!cols.some((c) => c.column_name === "sent_at"))
+      await db`alter table generated_issues add column sent_at timestamptz`;
+    draftsReady = true;
+  })();
+  await draftsPromise;
 }
 
 /** persist an engine-written issue (published by default for full autonomy) */
@@ -320,16 +351,21 @@ export async function unsubscribeByToken(token: string): Promise<boolean> {
 
 // ── A/B experiment counters ───────────────────────────────────────────────
 let abReady = false;
+let abPromise: Promise<void> | null = null;
 async function ensureAb() {
   if (!sql || abReady) return;
-  await sql`
-    create table if not exists ab_stats (
-      bucket       text primary key,
-      impressions  bigint not null default 0,
-      conversions  bigint not null default 0
-    )
-  `;
-  abReady = true;
+  const db = sql;
+  abPromise ??= (async () => {
+    await db`
+      create table if not exists ab_stats (
+        bucket       text primary key,
+        impressions  bigint not null default 0,
+        conversions  bigint not null default 0
+      )
+    `;
+    abReady = true;
+  })();
+  await abPromise;
 }
 
 /** +1 impression for an arm (the visitor saw the experiment) */
@@ -391,5 +427,71 @@ export async function getAbStats(): Promise<AbRow[]> {
     return rows;
   } catch {
     return [];
+  }
+}
+
+// ── Admin dashboard data ──────────────────────────────────────────────────
+export type Breakdown = {
+  confirmed: number;
+  pending: number;
+  unsubscribed: number;
+  total: number;
+};
+
+/** subscriber counts by status (for the admin KPIs) */
+export async function getSubscriberBreakdown(): Promise<Breakdown> {
+  const empty: Breakdown = { confirmed: 0, pending: 0, unsubscribed: 0, total: 0 };
+  if (!sql) return empty;
+  try {
+    await ensureSchema();
+    const rows = await sql<{ status: string; n: number }[]>`
+      select status, count(*)::int as n from subscribers group by status
+    `;
+    const b: Breakdown = { ...empty };
+    for (const r of rows) {
+      if (r.status === "confirmed") b.confirmed = r.n;
+      else if (r.status === "pending") b.pending = r.n;
+      else if (r.status === "unsubscribed") b.unsubscribed = r.n;
+      b.total += r.n;
+    }
+    return b;
+  } catch {
+    return empty;
+  }
+}
+
+export type SubRow = {
+  email: string;
+  status: string;
+  tier: string;
+  source: string;
+  created_at: string;
+};
+
+/** most recent subscribers (admin only) */
+export async function getRecentSubscribers(limit = 50): Promise<SubRow[]> {
+  if (!sql) return [];
+  try {
+    await ensureSchema();
+    return await sql<SubRow[]>`
+      select email, status, tier,
+        coalesce(nullif(src->>'source', ''), 'direct') as source,
+        created_at::text as created_at
+      from subscribers order by created_at desc limit ${limit}
+    `;
+  } catch {
+    return [];
+  }
+}
+
+/** clear the optimizer's verdict so the A/B test re-opens (admin control) */
+export async function resetAbDecision(experiment: string): Promise<void> {
+  if (!sql) return;
+  try {
+    await ensureDecisions();
+    await sql`delete from ab_decisions where experiment = ${experiment}`;
+    decisionCache = { at: 0, map: {} };
+  } catch {
+    /* best-effort */
   }
 }
