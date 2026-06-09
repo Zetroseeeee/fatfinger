@@ -18,7 +18,11 @@ import { Reveal, RevealItem } from "@/components/ui/reveal";
 
 type Stats = { subscribers: number; issues: number; openRate: number };
 
-export function Hero() {
+export function Hero({
+  ctaLabel = "Subscribe, it's free",
+}: {
+  ctaLabel?: string;
+}) {
   const [stats, setStats] = useState<Stats>({
     subscribers: 0,
     issues: 0,
@@ -99,7 +103,7 @@ export function Hero() {
               <RevealItem>
                 <div className="mt-9 flex flex-wrap items-center gap-4">
                   <MagneticButton href="/subscribe" variant="red">
-                    Subscribe, it&apos;s free
+                    {ctaLabel}
                   </MagneticButton>
                   <MagneticButton href="/issues" variant="ghost">
                     Read a sample issue ↓

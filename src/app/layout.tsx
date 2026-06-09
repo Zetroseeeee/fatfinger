@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Anton, Poppins, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 import { TransitionProvider } from "@/components/ui/page-transition";
+import { Attribution } from "@/components/analytics/attribution";
+import { Pixels } from "@/components/analytics/pixels";
 
 const anton = Anton({
   variable: "--font-anton",
@@ -51,6 +54,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-paper text-ink font-body">
         <TransitionProvider>{children}</TransitionProvider>
+        <Attribution />
+        <Analytics />
+        <Pixels />
       </body>
     </html>
   );

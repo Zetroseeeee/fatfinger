@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Reveal } from "@/components/ui/reveal";
+import { trackSignup } from "@/lib/track";
 
 /**
  * Section 7a - NEWSLETTER
@@ -49,6 +50,7 @@ export function Newsletter() {
       setPendingConfirmation(Boolean(data?.pendingConfirmation));
       setWebsite(""); // reset honeypot
       setStatus("success");
+      trackSignup();
     } catch {
       setErrorMessage("Couldn't reach the desk. Check your connection.");
       setStatus("error");

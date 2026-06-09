@@ -7,14 +7,19 @@ import { ChartOfDay } from "@/components/sections/chart-of-day";
 import { CtaBand } from "@/components/sections/cta-band";
 import { Newsletter } from "@/components/sections/newsletter";
 import { SiteFooter } from "@/components/sections/site-footer";
+import { AbBeacon } from "@/components/ab/ab-beacon";
+import { getBucket, pick } from "@/lib/ab";
 
-export default function Home() {
+export default async function Home() {
+  const bucket = await getBucket();
+
   return (
     <>
+      <AbBeacon bucket={bucket} />
       <TickerBar />
       <SiteNav />
       <main className="flex-1">
-        <Hero />
+        <Hero ctaLabel={pick("heroCta", bucket)} />
         <Bento />
         <Showcase />
         <ChartOfDay />

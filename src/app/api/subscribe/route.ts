@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { hasDb, upsertPending } from "@/lib/db";
+import { cookies } from "next/headers";
+import { hasDb, upsertPending, recordConversion } from "@/lib/db";
 import { hasResend, sendConfirmEmail } from "@/lib/email";
 
 /**
@@ -7,6 +8,7 @@ import { hasResend, sendConfirmEmail } from "@/lib/email";
  *   1. validate email (+ honeypot spam guard)
  *   2. upsert a `pending` subscriber row              → DATABASE_URL (Supabase/Neon)
  *   3. send a confirmation email with a tokenised link → RESEND_API_KEY (Resend)
+ *   4. attribute the signup to the visitor's A/B arm   → ff_ab cookie
  *
  * Degrades gracefully: with no keys it validates and returns ok so the funnel
  * works; a real confirmation only goes out when BOTH the DB and Resend are
@@ -40,11 +42,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "invalid_email" }, { status: 400 });
   }
 
+  // attribution: A/B arm + first-touch marketing source (set client/edge-side)
+  const jar = await cookies();
+  const armCookie = jar.get("ff_ab")?.value;
+  const arm = armCookie === "a" || armCookie === "b" ? armCookie : null;
+  let src: Record<string, unknown> | null = null;
+  const srcCookie = jar.get("ff_src")?.value;
+  if (srcCookie) {
+    try {
+      src = JSON.parse(decodeURIComponent(srcCookie));
+    } catch {
+      /* malformed cookie - ignore */
+    }
+  }
+
   try {
     const token = crypto.randomUUID();
 
     if (hasDb) {
-      await upsertPending(email, token);
+      await upsertPending(email, token, arm, src);
+    }
+    if (arm) {
+      await recordConversion(arm);
     }
 
     if (canConfirm) {

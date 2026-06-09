@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { trackSignup } from "@/lib/track";
 
 /**
  * SubscribeForm - the one real signup form, shared by the homepage newsletter
@@ -52,6 +53,7 @@ export function SubscribeForm({
       setPendingConfirmation(Boolean(data?.pendingConfirmation));
       setWebsite("");
       setStatus("success");
+      trackSignup();
     } catch {
       setErrorMessage("Couldn't reach the desk. Check your connection.");
       setStatus("error");
