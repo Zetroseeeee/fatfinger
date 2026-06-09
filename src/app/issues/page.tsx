@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
-import { ISSUES } from "@/content/issues";
+import { getAllIssues } from "@/lib/issues";
 import { TransitionLink } from "@/components/ui/page-transition";
 
+// always reflect the latest auto-published issues
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
-  title: "The Brief · sample issues · fatfinger.",
+  title: "The Brief · fatfinger.",
   description:
-    "Read sample issues of Fat Finger: the sharpest, wittiest read on markets, energy and macro. Illustrative data only.",
+    "Read Fat Finger: the sharpest, wittiest read on markets, energy and macro. Illustrative data only.",
 };
 
-export default function IssuesIndex() {
+export default async function IssuesIndex() {
+  const issues = await getAllIssues();
   return (
     <div className="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-24">
       <p className="font-mono text-[12px] uppercase tracking-[0.2em] text-signal">
@@ -26,7 +30,7 @@ export default function IssuesIndex() {
       </p>
 
       <ul className="mt-14 divide-y divide-ink/12 border-y-2 border-ink">
-        {ISSUES.map((issue) => (
+        {issues.map((issue) => (
           <li key={issue.slug}>
             <TransitionLink
               href={`/issues/${issue.slug}`}

@@ -1,4 +1,5 @@
 import postgres from "postgres";
+import type { Issue } from "@/content/issues";
 
 /**
  * Postgres access (Supabase or Neon) via DATABASE_URL. Everything degrades
@@ -41,9 +42,10 @@ async function ensureSchema() {
       confirmed_at timestamptz
     )
   `;
-  // A/B arm + marketing attribution (added idempotently for existing tables)
+  // A/B arm + marketing attribution + unsubscribe token (idempotent)
   await sql`alter table subscribers add column if not exists ab text`;
   await sql`alter table subscribers add column if not exists src jsonb`;
+  await sql`alter table subscribers add column if not exists unsub_token uuid default gen_random_uuid()`;
   schemaReady = true;
 }
 
@@ -204,28 +206,113 @@ async function ensureDrafts() {
       slug        text primary key,
       date        text not null,
       data        jsonb not null,
-      status      text not null default 'draft', -- draft | published
+      status      text not null default 'published', -- draft | published
       created_at  timestamptz not null default now()
     )
   `;
+  await sql`alter table generated_issues add column if not exists sent_at timestamptz`;
   draftsReady = true;
 }
 
-/** persist an engine-written issue draft (idempotent on slug); no-op without DB */
+/** persist an engine-written issue (published by default for full autonomy) */
 export async function saveGeneratedIssue(
   slug: string,
   date: string,
-  data: unknown
+  data: unknown,
+  status: "draft" | "published" = "published"
 ): Promise<boolean> {
   if (!sql) return false;
   try {
     await ensureDrafts();
     await sql`
-      insert into generated_issues (slug, date, data)
-      values (${slug}, ${date}, ${JSON.stringify(data)}::jsonb)
-      on conflict (slug) do update set data = excluded.data, date = excluded.date
+      insert into generated_issues (slug, date, data, status)
+      values (${slug}, ${date}, ${JSON.stringify(data)}::jsonb, ${status})
+      on conflict (slug) do update
+        set data = excluded.data, date = excluded.date, status = excluded.status
     `;
     return true;
+  } catch {
+    return false;
+  }
+}
+
+/** published engine issues, newest first (for the live /issues archive) */
+export async function getPublishedIssues(): Promise<Issue[]> {
+  if (!sql) return [];
+  try {
+    await ensureDrafts();
+    const rows = await sql<{ data: Issue }[]>`
+      select data from generated_issues
+      where status = 'published' order by created_at desc
+    `;
+    return rows.map((r) => r.data);
+  } catch {
+    return [];
+  }
+}
+
+export async function getPublishedIssue(slug: string): Promise<Issue | null> {
+  if (!sql) return null;
+  try {
+    await ensureDrafts();
+    const rows = await sql<{ data: Issue }[]>`
+      select data from generated_issues
+      where slug = ${slug} and status = 'published' limit 1
+    `;
+    return rows[0]?.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** has this issue already been emailed to the list? (send idempotency) */
+export async function issueAlreadySent(slug: string): Promise<boolean> {
+  if (!sql) return false;
+  try {
+    const rows = await sql<{ sent: boolean }[]>`
+      select sent_at is not null as sent from generated_issues where slug = ${slug}
+    `;
+    return rows[0]?.sent ?? false;
+  } catch {
+    return false;
+  }
+}
+
+export async function markIssueSent(slug: string): Promise<void> {
+  if (!sql) return;
+  try {
+    await sql`update generated_issues set sent_at = now() where slug = ${slug}`;
+  } catch {
+    /* best-effort */
+  }
+}
+
+export type Recipient = { email: string; unsub_token: string };
+
+/** confirmed subscribers + their unsubscribe token (for the daily blast) */
+export async function getConfirmedRecipients(): Promise<Recipient[]> {
+  if (!sql) return [];
+  try {
+    await ensureSchema();
+    return await sql<Recipient[]>`
+      select email, unsub_token::text as unsub_token
+      from subscribers where status = 'confirmed'
+    `;
+  } catch {
+    return [];
+  }
+}
+
+/** one-click unsubscribe by token; returns true if a row was updated */
+export async function unsubscribeByToken(token: string): Promise<boolean> {
+  if (!sql) return false;
+  try {
+    await ensureSchema();
+    const rows = await sql<{ email: string }[]>`
+      update subscribers set status = 'unsubscribed'
+      where unsub_token = ${token} returning email
+    `;
+    return rows.length > 0;
   } catch {
     return false;
   }

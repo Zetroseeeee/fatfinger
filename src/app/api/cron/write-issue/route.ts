@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { hasEngine, writeIssue, type Packet } from "@/lib/skinny-finger";
-import { saveGeneratedIssue } from "@/lib/db";
+import { saveGeneratedIssue, issueAlreadySent, markIssueSent } from "@/lib/db";
+import { hasResend, sendIssue } from "@/lib/email";
 
 /**
  * GET /api/cron/write-issue - the Skinny Finger Engine's morning run.
@@ -90,13 +91,24 @@ export async function GET(req: Request) {
 
   try {
     const issue = await writeIssue(packet);
-    const saved = await saveGeneratedIssue(issue.slug, issue.date, issue);
+
+    // 1) publish it (auto-appears on /issues)
+    await saveGeneratedIssue(issue.slug, issue.date, issue, "published");
+
+    // 2) email it to the confirmed list (once), if Resend is configured
+    let sent = 0;
+    if (hasResend && !(await issueAlreadySent(issue.slug))) {
+      const r = await sendIssue(issue);
+      sent = r?.sent ?? 0;
+      if (sent > 0) await markIssueSent(issue.slug);
+    }
+
     return NextResponse.json({
       ok: true,
-      saved, // false when no DB configured (draft returned but not persisted)
       slug: issue.slug,
       headline: issue.bigSlip.headline,
-      issue,
+      published: true,
+      sent,
     });
   } catch (err) {
     console.error("[skinny-finger] write failed", err);

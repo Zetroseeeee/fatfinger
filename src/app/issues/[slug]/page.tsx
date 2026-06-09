@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ISSUES, getIssue } from "@/content/issues";
+import { getAllIssues, resolveIssue } from "@/lib/issues";
 import { NewsletterIssue } from "@/components/newsletter/newsletter-issue";
 import { TransitionLink } from "@/components/ui/page-transition";
 
-export function generateStaticParams() {
-  return ISSUES.map((i) => ({ slug: i.slug }));
-}
+// render on demand so auto-published issues are always available + current
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -14,7 +13,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const issue = getIssue(slug);
+  const issue = await resolveIssue(slug);
   if (!issue) return { title: "Issue not found · fatfinger." };
   return {
     title: `${issue.bigSlip.headline} · fatfinger.`,
@@ -28,12 +27,12 @@ export default async function IssuePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const issue = getIssue(slug);
-  if (!issue) notFound();
-
-  const idx = ISSUES.findIndex((i) => i.slug === slug);
-  const prev = ISSUES[idx + 1];
-  const next = ISSUES[idx - 1];
+  const all = await getAllIssues();
+  const idx = all.findIndex((i) => i.slug === slug);
+  if (idx === -1) notFound();
+  const issue = all[idx];
+  const prev = all[idx + 1];
+  const next = all[idx - 1];
 
   // Full-bleed dark reading band: the page IS the dark surface, with one
   // centered, comfortable reading column. No floating card to mis-center.
