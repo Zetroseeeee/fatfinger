@@ -41,6 +41,7 @@ type Card = {
   span: string;
   accent: Accent;
   chart?: React.ReactNode;
+  footer?: React.ReactNode;
 };
 
 const CARDS: Card[] = [
@@ -70,16 +71,38 @@ const CARDS: Card[] = [
   {
     kicker: "02 / No gatekeeping",
     title: "Bloomberg-grade, not Bloomberg-priced",
-    body: "Most finance media is dumbed-down memes or research locked behind a $24,000 terminal. We charge nothing for the rigour and the readability.",
+    body: "Finance media is either dumbed-down memes or rigour locked behind a $24,000 terminal. We do both, and charge nothing for the daily.",
     span: "",
     accent: "electric",
+    footer: (
+      <div className="mt-6 flex items-end gap-3">
+        <span className="font-display text-[3.4rem] leading-[0.8] text-electric">
+          £0
+        </span>
+        <span className="mb-1 font-mono text-[11px] uppercase leading-tight tracking-[0.14em] text-ink-soft">
+          the daily brief
+          <br />
+          free, forever
+        </span>
+      </div>
+    ),
   },
   {
     kicker: "03 / The take",
     title: "Every story ends with the 'so what'",
-    body: "One closing line that says what it actually means. Usually an analogy you'll repeat at the desk, like: 'Compute is the new oil, and even Google is renting it.'",
+    body: "One closing line that tells you what it actually means. The kind of analogy you'll repeat at the desk:",
     span: "",
     accent: "ink",
+    footer: (
+      <div className="mt-6 border-l-[3px] border-signal pl-4">
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-signal">
+          for example
+        </p>
+        <p className="mt-1.5 text-[15px] font-medium italic leading-snug text-ink">
+          “Compute is the new oil, and even Google is renting it.”
+        </p>
+      </div>
+    ),
   },
   {
     kicker: "04 / The home beat",
@@ -134,7 +157,7 @@ function BentoCard({ card, index }: { card: Card; index: number }) {
           {card.body}
         </p>
       </div>
-      {card.chart && <div className="mt-6">{card.chart}</div>}
+      {card.chart ? <div className="mt-6">{card.chart}</div> : card.footer}
     </motion.article>
   );
 }
