@@ -20,9 +20,9 @@ export const sql = url
       prepare: false,
       idle_timeout: 20,
       max: 3,
-      // bound stale-connection hangs (Supabase pooler drops idle conns server-
-      // side; without this a query on a dead conn can hang ~60s) and recycle.
-      connect_timeout: 10,
+      // Bound connect time and recycle connections so a slow/stale Supabase-
+      // pooler connection can't hang a request for 30s+.
+      connect_timeout: 8,
       max_lifetime: 60 * 10,
       ssl: isLocal ? false : "require",
     })
@@ -162,22 +162,32 @@ export async function getDecision(experiment: string): Promise<string | null> {
   }
 }
 
-// 60s in-memory cache so we don't hit the DB on every page render
+// Non-blocking decision cache. getBucket() runs on the homepage hot path, so it
+// must NEVER await the DB - that turned every page load into a cross-region DB
+// round-trip (and a hang when the pooler was slow). We return the cached value
+// (or null) instantly and refresh in the background. On warm instances the
+// winner is served; a cold instance serves the 50/50 split for one request then
+// warms up. The page never waits on the database.
 let decisionCache: { at: number; map: Record<string, string | null> } = {
   at: 0,
   map: {},
 };
+let decisionInflight = false;
 export async function getDecisionCached(experiment: string): Promise<string | null> {
   const now = Date.now();
-  if (now - decisionCache.at < 60_000 && experiment in decisionCache.map) {
-    return decisionCache.map[experiment];
+  const fresh = now - decisionCache.at < 300_000 && experiment in decisionCache.map;
+  if (!fresh && !decisionInflight && sql) {
+    decisionInflight = true;
+    getDecision(experiment)
+      .then((w) => {
+        decisionCache = { at: Date.now(), map: { ...decisionCache.map, [experiment]: w } };
+      })
+      .catch(() => {})
+      .finally(() => {
+        decisionInflight = false;
+      });
   }
-  const w = await getDecision(experiment);
-  decisionCache = {
-    at: now,
-    map: { ...(now - decisionCache.at < 60_000 ? decisionCache.map : {}), [experiment]: w },
-  };
-  return w;
+  return decisionCache.map[experiment] ?? null;
 }
 
 export async function setDecision(
