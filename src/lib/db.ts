@@ -70,7 +70,6 @@ async function ensureSchema() {
 export async function getSubscriberCount(): Promise<number> {
   if (!sql) return 0;
   try {
-    await ensureSchema();
     const rows = await sql<{ n: number }[]>`
       select count(*)::int as n from subscribers where status = 'confirmed'
     `;
@@ -110,7 +109,6 @@ export type SourceRow = { source: string; signups: number; confirmed: number };
 export async function getSignupsBySource(): Promise<SourceRow[]> {
   if (!sql) return [];
   try {
-    await ensureSchema();
     const rows = await sql<SourceRow[]>`
       select
         coalesce(nullif(src->>'source', ''), 'direct') as source,
@@ -152,7 +150,6 @@ async function ensureDecisions() {
 export async function getDecision(experiment: string): Promise<string | null> {
   if (!sql) return null;
   try {
-    await ensureDecisions();
     const rows = await sql<{ winner: string | null }[]>`
       select winner from ab_decisions where experiment = ${experiment}
     `;
@@ -281,7 +278,6 @@ export async function saveGeneratedIssue(
 export async function getPublishedIssues(): Promise<Issue[]> {
   if (!sql) return [];
   try {
-    await ensureDrafts();
     const rows = await sql<{ data: Issue }[]>`
       select data from generated_issues
       where status = 'published' order by created_at desc
@@ -295,7 +291,6 @@ export async function getPublishedIssues(): Promise<Issue[]> {
 export async function getPublishedIssue(slug: string): Promise<Issue | null> {
   if (!sql) return null;
   try {
-    await ensureDrafts();
     const rows = await sql<{ data: Issue }[]>`
       select data from generated_issues
       where slug = ${slug} and status = 'published' limit 1
@@ -334,7 +329,6 @@ export type Recipient = { email: string; unsub_token: string };
 export async function getConfirmedRecipients(): Promise<Recipient[]> {
   if (!sql) return [];
   try {
-    await ensureSchema();
     return await sql<Recipient[]>`
       select email, unsub_token::text as unsub_token
       from subscribers where status = 'confirmed'
@@ -417,8 +411,6 @@ export type AbRow = {
 export async function getAbStats(): Promise<AbRow[]> {
   if (!sql) return [];
   try {
-    await ensureAb();
-    await ensureSchema();
     const rows = await sql<AbRow[]>`
       select
         s.bucket,
@@ -453,7 +445,6 @@ export async function getSubscriberBreakdown(): Promise<Breakdown> {
   const empty: Breakdown = { confirmed: 0, pending: 0, unsubscribed: 0, total: 0 };
   if (!sql) return empty;
   try {
-    await ensureSchema();
     const rows = await sql<{ status: string; n: number }[]>`
       select status, count(*)::int as n from subscribers group by status
     `;
@@ -482,7 +473,6 @@ export type SubRow = {
 export async function getRecentSubscribers(limit = 50): Promise<SubRow[]> {
   if (!sql) return [];
   try {
-    await ensureSchema();
     return await sql<SubRow[]>`
       select email, status, tier,
         coalesce(nullif(src->>'source', ''), 'direct') as source,
