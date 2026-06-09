@@ -86,7 +86,7 @@ export function SubscribeForm({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onSubmit={handleSubmit}
-            className="flex flex-col gap-3 sm:flex-row"
+            className="flex flex-col gap-3"
           >
             <input
               type="text"
@@ -108,14 +108,14 @@ export function SubscribeForm({
                 if (status === "error") setStatus("idle");
               }}
               placeholder="you@desk.com"
-              className="h-12 flex-1 rounded-full border-2 border-ink bg-paper px-5 font-mono text-[13px] text-ink placeholder:text-ink-soft/60 outline-none transition-shadow focus:shadow-hard-sm"
+              className="h-12 w-full rounded-full border-2 border-ink bg-paper px-5 font-mono text-[13px] text-ink placeholder:text-ink-soft/60 outline-none transition-shadow focus:shadow-hard-sm"
               aria-label="Email address"
             />
             <button
               type="submit"
               disabled={status === "loading"}
               aria-busy={status === "loading"}
-              className="h-12 shrink-0 rounded-full border-2 border-ink bg-signal px-7 font-mono text-[12px] uppercase tracking-[0.16em] text-paper transition-transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70"
+              className="h-12 w-full rounded-full border-2 border-ink bg-signal px-7 font-mono text-[12px] uppercase tracking-[0.16em] text-paper transition-transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70"
             >
               {status === "loading" ? "…" : buttonLabel}
             </button>

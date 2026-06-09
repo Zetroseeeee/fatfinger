@@ -22,9 +22,9 @@ import { useReducedMotion } from "framer-motion";
  * enter-animation lifecycle, which proved flaky under React 19 + AnimatePresence).
  */
 
-const COVER_MS = 500; // curtain rises to cover
-const HOLD_MS = 120; // beat at full cover while the route swaps
-const REVEAL_MS = 500; // curtain lifts off to reveal
+const COVER_MS = 460; // curtain rises to cover
+const HOLD_MS = 280; // hold at FULL cover while the route swaps AND the new page paints
+const REVEAL_MS = 460; // curtain lifts off to reveal
 
 type NavFn = (href: string) => void;
 const TransitionCtx = createContext<NavFn>(() => {});
@@ -98,13 +98,12 @@ export function TransitionProvider({
         raf.current = requestAnimationFrame(() => setY("0%"));
       });
 
-      // 3) once covered, swap the route under the curtain
+      // 3) the moment the curtain fully covers, swap the route underneath
+      timers.current.push(setTimeout(() => router.push(href), COVER_MS));
+      // 4) HOLD at full cover so the new page mounts + paints, THEN lift off.
+      //    (revealing too soon is what made heavier pages flash/cut.)
       timers.current.push(
-        setTimeout(() => router.push(href), COVER_MS + HOLD_MS)
-      );
-      // 4) lift the curtain off the top to reveal the new page
-      timers.current.push(
-        setTimeout(() => setY("-100%"), COVER_MS + HOLD_MS + 40)
+        setTimeout(() => setY("-100%"), COVER_MS + HOLD_MS)
       );
       // 5) done - unmount, release, move focus to the new page's main content
       timers.current.push(
