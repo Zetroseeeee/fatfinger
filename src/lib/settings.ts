@@ -1,12 +1,11 @@
-import { unstable_cache } from "next/cache";
 import { sql } from "@/lib/db";
 import { settingDefaults } from "@/lib/settings-config";
 
 /**
  * Key/value settings store. Admin reads/writes go straight to the DB; public
- * pages use getSettingsCached() which never blocks on the database (returns
- * cached values or defaults instantly, refreshes in the background) - same
- * pattern as the A/B decision cache, so settings can't slow the site down.
+ * pages use getSettingsCached() - a short TTL cache that reads the DB on a miss
+ * (bounded so it can't hang) and serves from memory otherwise. A saved setting
+ * shows up on the live site within ~TTL seconds.
  */
 let ready = false;
 let readyP: Promise<void> | null = null;
@@ -45,32 +44,42 @@ export async function setSettings(patch: Record<string, unknown>): Promise<void>
   try {
     await ensure();
     for (const [k, v] of Object.entries(patch)) {
+      // sql.json() encodes the value ONCE for the jsonb column (manual
+      // JSON.stringify + ::jsonb double-encoded it). null is stored as JSON null.
+      const json = sql.json((v ?? null) as Parameters<typeof sql.json>[0]);
       await sql`
-        insert into app_settings (key, value) values (${k}, ${JSON.stringify(v)}::jsonb)
+        insert into app_settings (key, value) values (${k}, ${json})
         on conflict (key) do update set value = excluded.value, updated_at = now()
       `;
     }
+    settingsCache = null; // local bust (other instances expire via TTL)
   } catch {
     /* best-effort */
   }
 }
 
-// ── Cached read for public pages ──────────────────────────────────────────
-// Next's data cache: served from cache (no per-request DB), revalidated on a
-// short window so a saved setting propagates to the live site within ~15s.
-const cachedSettings = unstable_cache(async () => getAllSettings(), ["app-settings-v1"], {
-  revalidate: 15,
-});
+// ── Short TTL cache for public pages ──────────────────────────────────────
+const TTL_MS = 20_000;
+let settingsCache: { at: number; map: Record<string, unknown> } | null = null;
 
 export async function getSettingsCached(): Promise<Record<string, unknown>> {
+  const now = Date.now();
+  if (settingsCache && now - settingsCache.at < TTL_MS) return settingsCache.map;
+  // miss: read the DB, but bounded so a slow connection can't hang the page
+  const fallback = settingsCache?.map ?? settingDefaults();
   try {
-    return await cachedSettings();
+    const map = await Promise.race([
+      getAllSettings(),
+      new Promise<Record<string, unknown>>((res) => setTimeout(() => res(fallback), 3000)),
+    ]);
+    settingsCache = { at: now, map };
+    return map;
   } catch {
-    return settingDefaults();
+    return fallback;
   }
 }
 
-/** convenience: one cached setting with a typed fallback (never blocks) */
+/** convenience: one cached setting with a typed fallback */
 export async function setting<T>(key: string, fallback: T): Promise<T> {
   const all = await getSettingsCached();
   return (all[key] as T) ?? fallback;
