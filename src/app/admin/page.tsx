@@ -11,7 +11,6 @@ import {
 } from "@/lib/db";
 import { EXPERIMENTS } from "@/lib/ab";
 import { getAllSettings } from "@/lib/settings";
-import { settingDefaults } from "@/lib/settings-config";
 import { PipelineGraph } from "@/components/admin/pipeline-graph";
 import { AdminOps } from "@/components/admin/admin-ops";
 import { AdminSettings } from "@/components/admin/admin-settings";
@@ -25,31 +24,20 @@ export const metadata: Metadata = {
 const pct = (n: number, d: number) => (d > 0 ? `${((n / d) * 100).toFixed(1)}%` : "—");
 const fmtDate = (s: string) => (s ? s.slice(0, 10) : "");
 
-/** never let one slow query hang the dashboard - fall back after `ms` */
-function withTimeout<T>(p: Promise<T>, fallback: T, ms = 7000): Promise<T> {
-  return Promise.race([
-    p,
-    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
-  ]);
-}
-
 export default async function AdminPage() {
   if (!(await isAdmin())) redirect("/admin/login");
 
   // Sequential, not Promise.all: with one pooled connection, concurrent queries
-  // pipeline onto it and the Supabase transaction pooler stalls. One at a time is
-  // ~1s total and rock-solid. Each is still capped so nothing can hang the page.
-  const bd = await withTimeout(getSubscriberBreakdown(), {
-    confirmed: 0,
-    pending: 0,
-    unsubscribed: 0,
-    total: 0,
-  });
-  const recent = await withTimeout(getRecentSubscribers(50), []);
-  const ab = await withTimeout(getAbStats(), []);
-  const sources = await withTimeout(getSignupsBySource(), []);
-  const winner = await withTimeout(getDecision("site"), null);
-  const settings = await withTimeout(getAllSettings(), settingDefaults());
+  // pipeline onto it and the Supabase transaction pooler stalls. Each helper has
+  // its own try/catch returning a safe default, so a DB error never breaks the
+  // page. (No Promise.race timeouts here - on a single connection an abandoned
+  // query keeps running and poisons every subsequent one.)
+  const bd = await getSubscriberBreakdown();
+  const recent = await getRecentSubscribers(50);
+  const ab = await getAbStats();
+  const sources = await getSignupsBySource();
+  const winner = await getDecision("site");
+  const settings = await getAllSettings();
   const byBucket: Record<string, AbRow> = {};
   for (const r of ab) byBucket[r.bucket] = r;
   const arms = ["a", "b"] as const;

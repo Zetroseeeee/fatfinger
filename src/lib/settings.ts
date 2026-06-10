@@ -25,12 +25,13 @@ async function ensure() {
   await readyP;
 }
 
-/** full settings map (defaults overlaid with stored values) - admin use */
+/** full settings map (defaults overlaid with stored values) - admin use.
+ * No DDL here: the table is created by setSettings; if it doesn't exist yet the
+ * select throws and we fall back to defaults. */
 export async function getAllSettings(): Promise<Record<string, unknown>> {
   const base = settingDefaults();
   if (!sql) return base;
   try {
-    await ensure();
     const rows = await sql<{ key: string; value: unknown }[]>`select key, value from app_settings`;
     for (const r of rows) base[r.key] = r.value;
     return base;

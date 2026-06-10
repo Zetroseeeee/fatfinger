@@ -23,10 +23,10 @@ export const sql = url
       // the pooler handles cross-invocation concurrency. Fewer connections = far
       // less pooler pressure, which was intermittently hanging cold starts.
       max: 1,
-      // Bound connect time and recycle connections so a slow/stale Supabase-
-      // pooler connection can't hang a request for 30s+.
+      // Bound connect time and recycle connections quickly so a stale/poisoned
+      // pooler connection is discarded within ~90s rather than reused.
       connect_timeout: 8,
-      max_lifetime: 60 * 10,
+      max_lifetime: 90,
       ssl: isLocal ? false : "require",
     })
   : null;
