@@ -21,7 +21,7 @@ export const SETTINGS: Group[] = [
       { key: "autoPublish", label: "Auto-publish to the site", type: "toggle", default: true, wired: true, help: "Each morning's issue appears on /issues on its own." },
       { key: "autoSend", label: "Auto-email the list", type: "toggle", default: true, wired: true, help: "The issue emails itself to confirmed subscribers." },
       { key: "weekdaysOnly", label: "Weekdays only", type: "toggle", default: true, wired: true },
-      { key: "publishHour", label: "Publish time (UTC)", type: "select", default: "11", options: ["5", "6", "7", "8", "11", "12", "13"], wired: true },
+      { key: "publishHour", label: "Publish time (UTC)", type: "select", default: "11", options: ["5", "6", "7", "8", "11", "12", "13"], help: "Stored only for now: Vercel's free plan allows one fixed daily cron (11:00 UTC). Upgrading to Pro unlocks hourly crons and this control." },
       { key: "defaultMood", label: "Default mood line", type: "text", default: "Risk-off and twitchy", wired: true },
       { key: "includeChart", label: "Include a chart", type: "toggle", default: true, wired: true },
       { key: "includeFatFinger", label: "Include 'Fat Finger of the day'", type: "toggle", default: true, wired: true },

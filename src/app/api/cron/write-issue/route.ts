@@ -78,15 +78,12 @@ export async function GET(req: Request) {
   const settings = await getAllSettings();
   const force = new URL(req.url).searchParams.get("force") === "1"; // manual run from /admin
 
-  // The Vercel cron fires hourly; Settings decide which hour/days actually run.
+  // The cron fires once each weekday (Vercel Hobby allows daily crons only, so
+  // publishHour can't gate here - it would skip the single daily run).
   const now = new Date();
   const dow = now.getUTCDay(); // 0 = Sun, 6 = Sat
   if (!force && settings.weekdaysOnly !== false && (dow === 0 || dow === 6)) {
     return NextResponse.json({ ok: true, skipped: "weekend (weekdaysOnly is on)" });
-  }
-  const publishHour = Number(settings.publishHour ?? 11);
-  if (!force && now.getUTCHours() !== publishHour) {
-    return NextResponse.json({ ok: true, skipped: `waiting for ${publishHour}:00 UTC` });
   }
   const iso = now.toISOString().slice(0, 10); // 2026-06-09
 
