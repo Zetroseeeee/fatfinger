@@ -11,13 +11,15 @@ import { ListenButton } from "./listen-button";
 export function ReadingShell({
   slug,
   narration,
+  defaultTheme = "dark",
   children,
 }: {
   slug: string;
   narration: string;
+  defaultTheme?: "dark" | "light";
   children: React.ReactNode;
 }) {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">(defaultTheme);
 
   useEffect(() => {
     const saved = localStorage.getItem("ff-read-theme");

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAllIssues, resolveIssue } from "@/lib/issues";
 import { narrate } from "@/lib/narrate";
+import { setting } from "@/lib/settings";
 import { NewsletterIssue } from "@/components/newsletter/newsletter-issue";
 import { ReadingShell } from "@/components/newsletter/reading-shell";
 import { TransitionLink } from "@/components/ui/page-transition";
@@ -35,11 +36,12 @@ export default async function IssuePage({
   const issue = all[idx];
   const prev = all[idx + 1];
   const next = all[idx - 1];
+  const defaultTheme = (await setting("defaultTheme", "dark")) === "light" ? "light" : "dark";
 
-  // Themeable reading surface (dark by default, toggle to light) with one
+  // Themeable reading surface (default from Settings, reader can toggle) with one
   // centered reading column and floating Listen + theme controls.
   return (
-    <ReadingShell slug={issue.slug} narration={narrate(issue)}>
+    <ReadingShell slug={issue.slug} narration={narrate(issue)} defaultTheme={defaultTheme}>
       <div className="mx-auto max-w-2xl px-5 py-10 sm:px-8 sm:py-14">
         <TransitionLink
           href="/issues"

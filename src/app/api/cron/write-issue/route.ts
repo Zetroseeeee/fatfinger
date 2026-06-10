@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { hasEngine, writeIssue, type Packet } from "@/lib/skinny-finger";
 import { saveGeneratedIssue, issueAlreadySent, markIssueSent } from "@/lib/db";
 import { hasResend, sendIssue } from "@/lib/email";
+import { getAllSettings } from "@/lib/settings";
 
 /**
  * GET /api/cron/write-issue - the Skinny Finger Engine's morning run.
@@ -90,14 +91,16 @@ export async function GET(req: Request) {
   };
 
   try {
+    const settings = await getAllSettings();
     const issue = await writeIssue(packet);
 
-    // 1) publish it (auto-appears on /issues)
-    await saveGeneratedIssue(issue.slug, issue.date, issue, "published");
+    // 1) publish (or keep as a draft) per the admin Settings toggle
+    const published = settings.autoPublish !== false;
+    await saveGeneratedIssue(issue.slug, issue.date, issue, published ? "published" : "draft");
 
-    // 2) email it to the confirmed list (once), if Resend is configured
+    // 2) email it to the confirmed list (once), if enabled + Resend configured
     let sent = 0;
-    if (hasResend && !(await issueAlreadySent(issue.slug))) {
+    if (settings.autoSend !== false && hasResend && !(await issueAlreadySent(issue.slug))) {
       const r = await sendIssue(issue);
       sent = r?.sent ?? 0;
       if (sent > 0) await markIssueSent(issue.slug);
@@ -107,7 +110,7 @@ export async function GET(req: Request) {
       ok: true,
       slug: issue.slug,
       headline: issue.bigSlip.headline,
-      published: true,
+      published,
       sent,
     });
   } catch (err) {

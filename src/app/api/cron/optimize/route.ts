@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAbStats, getDecision, setDecision } from "@/lib/db";
+import { getAllSettings } from "@/lib/settings";
 
 /**
  * GET /api/cron/optimize - the self-optimizing A/B brain.
@@ -15,8 +16,7 @@ import { getAbStats, getDecision, setDecision } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 const MIN_IMPRESSIONS_PER_ARM = 200; // don't decide on tiny traffic
-const MIN_TOTAL_SIGNUPS = 30; // ...or tiny conversions
-const Z_95 = 1.96; // 95% confidence
+const Z_FOR = { "90": 1.645, "95": 1.96, "99": 2.576 } as const;
 
 function authed(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -24,11 +24,18 @@ function authed(req: Request) {
   return req.headers.get("authorization") === `Bearer ${secret}`;
 }
 
-function evaluate(iA: number, cA: number, iB: number, cB: number) {
+function evaluate(
+  iA: number,
+  cA: number,
+  iB: number,
+  cB: number,
+  minSignups: number,
+  zThreshold: number
+) {
   if (iA < MIN_IMPRESSIONS_PER_ARM || iB < MIN_IMPRESSIONS_PER_ARM) {
     return { winner: null as string | null, z: 0, reason: "not enough views yet" };
   }
-  if (cA + cB < MIN_TOTAL_SIGNUPS) {
+  if (cA + cB < minSignups) {
     return { winner: null, z: 0, reason: "not enough signups yet" };
   }
   const pA = cA / iA;
@@ -37,7 +44,7 @@ function evaluate(iA: number, cA: number, iB: number, cB: number) {
   const se = Math.sqrt(pooled * (1 - pooled) * (1 / iA + 1 / iB));
   if (se === 0) return { winner: null, z: 0, reason: "no variance" };
   const z = (pB - pA) / se;
-  if (Math.abs(z) < Z_95) {
+  if (Math.abs(z) < zThreshold) {
     return { winner: null, z, reason: "not significant yet (keep testing)" };
   }
   return { winner: pB > pA ? "b" : "a", z, reason: "significant winner" };
@@ -62,15 +69,17 @@ export async function GET(req: Request) {
   const iB = b?.impressions ?? 0;
   const cB = b?.conversions ?? 0;
 
-  const result = evaluate(iA, cA, iB, cB);
+  // thresholds + auto-promote come from admin Settings → Growth
+  const settings = await getAllSettings();
+  const conf = String(settings.abConfidence ?? "95") as keyof typeof Z_FOR;
+  const minSignups = Number(settings.abMinSignups ?? 30);
+  const autoPromote = settings.abAutoPromote !== false;
+
+  const result = evaluate(iA, cA, iB, cB, minSignups, Z_FOR[conf] ?? 1.96);
   const detail = { a: { views: iA, signups: cA }, b: { views: iB, signups: cB }, ...result };
 
-  if (result.winner) {
-    await setDecision("site", result.winner, result.z, detail);
-  } else {
-    // record progress (winner stays null) so /ab shows the running verdict
-    await setDecision("site", null, result.z, detail);
-  }
+  // record the running verdict always; only PROMOTE the winner if enabled
+  await setDecision("site", autoPromote ? result.winner : null, result.z, detail);
 
-  return NextResponse.json({ ok: true, ...detail });
+  return NextResponse.json({ ok: true, autoPromote, ...detail });
 }

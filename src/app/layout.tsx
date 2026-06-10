@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { TransitionProvider } from "@/components/ui/page-transition";
 import { Attribution } from "@/components/analytics/attribution";
 import { Pixels } from "@/components/analytics/pixels";
+import { AnnouncementBanner } from "@/components/announcement-banner";
 
 const anton = Anton({
   variable: "--font-anton",
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -53,6 +54,7 @@ export default function RootLayout({
       className={`${anton.variable} ${poppins.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-paper text-ink font-body">
+        <AnnouncementBanner />
         <TransitionProvider>{children}</TransitionProvider>
         <Attribution />
         <Analytics />

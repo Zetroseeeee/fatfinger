@@ -9,9 +9,13 @@ import { Newsletter } from "@/components/sections/newsletter";
 import { SiteFooter } from "@/components/sections/site-footer";
 import { AbBeacon } from "@/components/ab/ab-beacon";
 import { getBucket, pick } from "@/lib/ab";
+import { setting } from "@/lib/settings";
 
 export default async function Home() {
   const bucket = await getBucket();
+  // admin override wins; otherwise the A/B test picks the label
+  const override = await setting("heroCtaOverride", "");
+  const ctaLabel = override.trim() ? override : pick("heroCta", bucket);
 
   return (
     <>
@@ -19,7 +23,7 @@ export default async function Home() {
       <TickerBar />
       <SiteNav />
       <main className="flex-1">
-        <Hero ctaLabel={pick("heroCta", bucket)} />
+        <Hero ctaLabel={ctaLabel} />
         <Bento />
         <Showcase />
         <ChartOfDay />

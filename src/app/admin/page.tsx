@@ -10,8 +10,11 @@ import {
   type AbRow,
 } from "@/lib/db";
 import { EXPERIMENTS } from "@/lib/ab";
+import { getAllSettings } from "@/lib/settings";
+import { settingDefaults } from "@/lib/settings-config";
 import { PipelineGraph } from "@/components/admin/pipeline-graph";
 import { AdminOps } from "@/components/admin/admin-ops";
+import { AdminSettings } from "@/components/admin/admin-settings";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -46,6 +49,7 @@ export default async function AdminPage() {
   const ab = await withTimeout(getAbStats(), []);
   const sources = await withTimeout(getSignupsBySource(), []);
   const winner = await withTimeout(getDecision("site"), null);
+  const settings = await withTimeout(getAllSettings(), settingDefaults());
   const byBucket: Record<string, AbRow> = {};
   for (const r of ab) byBucket[r.bucket] = r;
   const arms = ["a", "b"] as const;
@@ -239,6 +243,20 @@ export default async function AdminPage() {
                 )}
               </tbody>
             </table>
+          </div>
+        </section>
+
+        {/* settings */}
+        <section className="mt-14">
+          <h2 className="font-mono text-[12px] uppercase tracking-[0.18em] text-ink-soft">
+            Settings — controls for the whole site
+          </h2>
+          <p className="mt-1 font-mono text-[11px] text-ink-soft/70">
+            Anything marked <span className="text-up">Live</span> changes the site
+            immediately on save; the rest are stored and ready to wire.
+          </p>
+          <div className="mt-5">
+            <AdminSettings values={settings} />
           </div>
         </section>
       </div>
