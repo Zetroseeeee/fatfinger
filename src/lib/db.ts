@@ -43,8 +43,16 @@ let pool: Pool | null = url ? mkPool() : null;
  */
 const QUERY_CAP_MS = 4000;
 
+// Circuit breaker: after a double-timeout the DB is genuinely unreachable from
+// this instance - fail every query fast for a beat instead of letting a page
+// with N sequential queries stack N x 8s of timeouts.
+let dbDownUntil = 0;
+
 function healthyQuery(args: unknown[]): Promise<unknown> {
   type Fn = (...a: unknown[]) => Promise<unknown>;
+  if (Date.now() < dbDownUntil) {
+    return Promise.reject(new Error("db circuit open (recent timeouts)"));
+  }
   return new Promise((resolve, reject) => {
     let settled = false;
     const attempt = (p: Pool, isRetry: boolean) => {
@@ -57,6 +65,7 @@ function healthyQuery(args: unknown[]): Promise<unknown> {
         void dead?.end({ timeout: 1 }).catch(() => {});
         if (isRetry) {
           settled = true;
+          dbDownUntil = Date.now() + 10_000;
           reject(new Error("db query timed out twice"));
         } else {
           attempt(pool, true);
@@ -67,6 +76,7 @@ function healthyQuery(args: unknown[]): Promise<unknown> {
           clearTimeout(timer);
           if (!settled) {
             settled = true;
+            dbDownUntil = 0; // healthy again
             resolve(v);
           }
         },
