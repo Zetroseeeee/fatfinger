@@ -2,8 +2,6 @@ import { unstable_cache } from "next/cache";
 import { sql } from "@/lib/db";
 import { settingDefaults } from "@/lib/settings-config";
 
-export const SETTINGS_TAG = "app-settings";
-
 /**
  * Key/value settings store. Admin reads/writes go straight to the DB; public
  * pages use getSettingsCached() which never blocks on the database (returns
@@ -58,11 +56,10 @@ export async function setSettings(patch: Record<string, unknown>): Promise<void>
 }
 
 // ── Cached read for public pages ──────────────────────────────────────────
-// Next's data cache: served from cache (no per-request DB), refreshed every 60s,
-// and busted instantly + reliably on save via revalidateTag(SETTINGS_TAG).
+// Next's data cache: served from cache (no per-request DB), revalidated on a
+// short window so a saved setting propagates to the live site within ~15s.
 const cachedSettings = unstable_cache(async () => getAllSettings(), ["app-settings-v1"], {
-  revalidate: 60,
-  tags: [SETTINGS_TAG],
+  revalidate: 15,
 });
 
 export async function getSettingsCached(): Promise<Record<string, unknown>> {
