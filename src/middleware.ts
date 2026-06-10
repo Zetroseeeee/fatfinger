@@ -19,6 +19,7 @@ export function middleware(req: NextRequest) {
 
   const headers = new Headers(req.headers);
   headers.set("x-ff-ab", bucket);
+  headers.set("x-ff-path", req.nextUrl.pathname); // for the maintenance-mode gate
   const res = NextResponse.next({ request: { headers } });
 
   if (existing !== bucket) {

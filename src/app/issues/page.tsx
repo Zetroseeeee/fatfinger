@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getAllIssues } from "@/lib/issues";
+import { setting } from "@/lib/settings";
 import { TransitionLink } from "@/components/ui/page-transition";
 
 // always reflect the latest auto-published issues
@@ -13,6 +14,10 @@ export const metadata: Metadata = {
 
 export default async function IssuesIndex() {
   const issues = await getAllIssues();
+  const tagline = await setting(
+    "tagline",
+    "Markets, energy and macro. Decoded, not reported."
+  );
   return (
     <div className="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-24">
       <p className="font-mono text-[12px] uppercase tracking-[0.2em] text-signal">
@@ -24,9 +29,8 @@ export default async function IssuesIndex() {
         inbox, most mornings.
       </h1>
       <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-soft">
-        Markets, energy and macro. Decoded, not reported. Read one in five
-        minutes, sound like the smartest person on the desk. Numbers below are
-        illustrative.
+        {tagline} Read one in five minutes, sound like the smartest person on
+        the desk. Numbers below are illustrative.
       </p>
 
       <ul className="mt-14 divide-y divide-ink/12 border-y-2 border-ink">

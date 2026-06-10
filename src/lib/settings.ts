@@ -60,24 +60,36 @@ export async function setSettings(patch: Record<string, unknown>): Promise<void>
 }
 
 // ── Short TTL cache for public pages ──────────────────────────────────────
-const TTL_MS = 20_000;
+// The TTL itself is a setting (Advanced → cacheTtl, seconds, clamped 5-600):
+// lower = changes propagate faster, higher = fewer DB reads.
 let settingsCache: { at: number; map: Record<string, unknown> } | null = null;
+
+function ttlMs(): number {
+  const v = Number(settingsCache?.map?.cacheTtl);
+  if (!Number.isFinite(v) || v <= 0) return 20_000;
+  return Math.min(600, Math.max(5, v)) * 1000;
+}
+
+let settingsInflight: Promise<void> | null = null;
 
 export async function getSettingsCached(): Promise<Record<string, unknown>> {
   const now = Date.now();
-  if (settingsCache && now - settingsCache.at < TTL_MS) return settingsCache.map;
-  // miss: read the DB, but bounded so a slow connection can't hang the page
-  const fallback = settingsCache?.map ?? settingDefaults();
-  try {
-    const map = await Promise.race([
-      getAllSettings(),
-      new Promise<Record<string, unknown>>((res) => setTimeout(() => res(fallback), 3000)),
-    ]);
-    settingsCache = { at: now, map };
-    return map;
-  } catch {
-    return fallback;
+  if (!settingsCache || now - settingsCache.at >= ttlMs()) {
+    // refresh, deduped across concurrent callers. NEVER Promise.race/abandon a
+    // query here: on a single pooled connection an abandoned query keeps
+    // running and poisons every query behind it (the /admin 35s-hang bug).
+    settingsInflight ??= getAllSettings()
+      .then((map) => {
+        settingsCache = { at: Date.now(), map };
+      })
+      .catch(() => {})
+      .finally(() => {
+        settingsInflight = null;
+      });
+    // cold instance: wait for the first real load; warm: serve stale, refresh in bg
+    if (!settingsCache) await settingsInflight;
   }
+  return settingsCache?.map ?? settingDefaults();
 }
 
 /** convenience: one cached setting with a typed fallback */

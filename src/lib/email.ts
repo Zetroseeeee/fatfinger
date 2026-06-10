@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import type { Issue } from "@/content/issues";
 import { getConfirmedRecipients } from "@/lib/db";
+import { getSettingsCached } from "@/lib/settings";
 
 /**
  * Resend email. No-ops gracefully when RESEND_API_KEY is unset. The confirmation
@@ -12,6 +13,16 @@ const from = process.env.EMAIL_FROM || "Fat Finger <brief@fatfinger.news>";
 
 export const hasResend = !!apiKey;
 const resend = apiKey ? new Resend(apiKey) : null;
+
+/** Sender identity, honouring the admin Settings → Email overrides. */
+async function senderIdentity(): Promise<{ from: string; replyTo?: string }> {
+  const s = await getSettingsCached();
+  const name = String(s.fromName ?? "").trim();
+  const replyTo = String(s.replyTo ?? "").trim() || undefined;
+  if (!name) return { from, replyTo };
+  const addr = from.match(/<(.+)>/)?.[1];
+  return { from: addr ? `${name} <${addr}>` : from, replyTo };
+}
 
 function confirmHtml(confirmUrl: string) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"/>
@@ -84,12 +95,45 @@ export async function sendConfirmEmail(
 ): Promise<boolean> {
   if (!resend) return false;
   try {
+    const id = await senderIdentity();
     const { error } = await resend.emails.send({
-      from,
+      from: id.from,
+      replyTo: id.replyTo,
       to,
       subject: "Confirm your email and you're in",
       html: confirmHtml(confirmUrl),
       text: confirmText(confirmUrl),
+    });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/** Short on-brand welcome note (Settings → Email → "Send a welcome email"). */
+export async function sendWelcomeEmail(to: string): Promise<boolean> {
+  if (!resend) return false;
+  try {
+    const id = await senderIdentity();
+    const base = process.env.NEXT_PUBLIC_SITE_URL || "https://www.fatfinger.news";
+    const { error } = await resend.emails.send({
+      from: id.from,
+      replyTo: id.replyTo,
+      to,
+      subject: "You're in. Here's how the brief works",
+      html: `<!doctype html><html><body style="margin:0;background:#0a0b0d;font-family:-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;color:#f4f4f5;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:36px 14px;"><tr><td align="center">
+        <table role="presentation" width="100%" style="max-width:520px;text-align:left;">
+          <tr><td style="font-size:22px;font-weight:700;">fatfinger<span style="color:#e5342b;">.</span></td></tr>
+          <tr><td style="padding-top:18px;font-size:16px;line-height:1.65;color:#d8d9dc;">
+            Welcome to the desk. One brief, most mornings: what actually moved the
+            market, the energy angle nobody else leads with, and one chart that
+            earns its pixels. Five minutes, no jargon, every story ends with the take.
+          </td></tr>
+          <tr><td style="padding-top:18px;"><a href="${base}/issues" style="color:#f4f4f5;font-family:monospace;font-size:13px;letter-spacing:1px;text-transform:uppercase;">Read past issues &rarr;</a></td></tr>
+          <tr><td style="padding-top:26px;font-family:monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#5b5e66;">Not investment advice.</td></tr>
+        </table></td></tr></table></body></html>`,
+      text: `Welcome to Fat Finger. One brief, most mornings: what moved the market, the energy angle, one chart. ${base}/issues`,
     });
     return !error;
   } catch {
@@ -179,7 +223,19 @@ function sectionHead(n: string, title: string) {
   return `<div style="margin:34px 0 14px;"><span style="font-family:'SF Mono',monospace;font-size:11px;color:${T.signal};">${n}</span> <span style="font-size:22px;font-weight:800;letter-spacing:-0.4px;text-transform:uppercase;color:${T.text};">${title}</span></div>`;
 }
 
-export function renderIssueEmail(issue: Issue, unsubUrl: string, base: string): string {
+export type IssueEmailOpts = {
+  showChart?: boolean;
+  showFatFinger?: boolean;
+  unsubFooter?: string;
+};
+
+export function renderIssueEmail(
+  issue: Issue,
+  unsubUrl: string,
+  base: string,
+  opts: IssueEmailOpts = {}
+): string {
+  const { showChart = true, showFatFinger = true, unsubFooter = "" } = opts;
   const webUrl = `${base}/issues/${issue.slug}`;
   const tape = issue.tape
     .map((t) => {
@@ -244,21 +300,29 @@ export function renderIssueEmail(issue: Issue, unsubUrl: string, base: string): 
 
       <tr><td>${sectionHead("04", "Energy Desk")}${energy}</td></tr>
 
-      <tr><td>${sectionHead("05", "Fat Finger of the Day")}
+      ${
+        showFatFinger
+          ? `<tr><td>${sectionHead("05", "Fat Finger of the Day")}
         <div style="border:1px solid rgba(229,52,43,0.3);background:rgba(229,52,43,0.06);border-radius:14px;padding:18px;">
           <div style="font-size:18px;font-weight:800;text-transform:uppercase;color:${T.text};">${issue.fatFinger.headline}</div>
           <p style="font-size:15px;line-height:1.6;color:${T.body};margin:8px 0 0;">${issue.fatFinger.body}</p>${take("", issue.fatFinger.take)}${src(issue.fatFinger.source)}
         </div>
-      </td></tr>
+      </td></tr>`
+          : ""
+      }
 
-      <tr><td>${sectionHead("06", "Chart of the Day")}
+      ${
+        showChart
+          ? `<tr><td>${sectionHead(showFatFinger ? "06" : "05", "Chart of the Day")}
         <div style="background:${T.panel};border:1px solid ${T.line};border-radius:14px;padding:16px;">
           <div style="font-size:16px;font-weight:800;text-transform:uppercase;color:${T.text};">${issue.chart.title}</div>
           <div style="font-size:13px;color:${T.muted};margin:4px 0 12px;"><span style="color:${T.signal};">&#8250;</span> ${issue.chart.take}</div>
           <img src="${quickChartUrl(issue.chart)}" width="528" alt="${issue.chart.title}" style="width:100%;border-radius:8px;display:block;"/>
           ${src(issue.chart.source)}
         </div>
-      </td></tr>
+      </td></tr>`
+          : ""
+      }
 
       <tr><td style="padding-top:30px;border-top:1px solid ${T.line};text-align:center;">
         <p style="font-size:16px;line-height:1.6;color:${T.body};">${issue.signOff}</p>
@@ -267,7 +331,7 @@ export function renderIssueEmail(issue: Issue, unsubUrl: string, base: string): 
 
       <tr><td style="padding-top:24px;text-align:center;font-family:'SF Mono',monospace;font-size:10px;line-height:1.8;letter-spacing:1px;text-transform:uppercase;color:#5b5e66;">
         fatfinger<span style="color:${T.signal};">.</span> &middot; not investment advice &middot; illustrative data<br/>
-        <a href="${unsubUrl}" style="color:#5b5e66;">Unsubscribe</a>
+        ${unsubFooter ? `${unsubFooter}<br/>` : ""}<a href="${unsubUrl}" style="color:#5b5e66;">Unsubscribe</a>
       </td></tr>
     </table>
   </td></tr></table>
@@ -300,16 +364,26 @@ export async function sendIssue(issue: Issue): Promise<{ sent: number } | null> 
   if (!recipients.length) return { sent: 0 };
   const base = process.env.NEXT_PUBLIC_SITE_URL || "https://www.fatfinger.news";
 
+  // honour admin Settings: sender identity + which sections the email includes
+  const s = await getSettingsCached();
+  const id = await senderIdentity();
+  const opts: IssueEmailOpts = {
+    showChart: s.includeChart !== false,
+    showFatFinger: s.includeFatFinger !== false,
+    unsubFooter: String(s.unsubFooter ?? "").trim(),
+  };
+
   let sent = 0;
   for (let i = 0; i < recipients.length; i += 100) {
     const chunk = recipients.slice(i, i + 100);
     const batch = chunk.map((r) => {
       const unsubUrl = `${base}/api/unsubscribe?t=${r.unsub_token}`;
       return {
-        from,
+        from: id.from,
+        replyTo: id.replyTo,
         to: r.email,
         subject: issue.bigSlip.headline,
-        html: renderIssueEmail(issue, unsubUrl, base),
+        html: renderIssueEmail(issue, unsubUrl, base, opts),
         text: issueText(issue, unsubUrl),
         headers: {
           "List-Unsubscribe": `<${unsubUrl}>`,

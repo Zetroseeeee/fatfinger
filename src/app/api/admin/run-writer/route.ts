@@ -12,7 +12,8 @@ export async function POST() {
   const base = process.env.NEXT_PUBLIC_SITE_URL || "https://www.fatfinger.news";
   const secret = process.env.CRON_SECRET || "";
   try {
-    const r = await fetch(`${base}/api/cron/write-issue`, {
+    // force=1: a manual run from the dashboard bypasses the weekday/hour guards
+    const r = await fetch(`${base}/api/cron/write-issue?force=1`, {
       headers: { authorization: `Bearer ${secret}` },
     });
     const data = await r.json().catch(() => ({}));

@@ -37,11 +37,21 @@ export default async function IssuePage({
   const prev = all[idx + 1];
   const next = all[idx - 1];
   const defaultTheme = (await setting("defaultTheme", "dark")) === "light" ? "light" : "dark";
+  const showAudio = await setting("showAudioButton", true);
+  const fontScale = String(await setting("fontScale", "normal"));
+  const showChart = await setting("includeChart", true);
+  const showFatFinger = await setting("includeFatFinger", true);
 
   // Themeable reading surface (default from Settings, reader can toggle) with one
   // centered reading column and floating Listen + theme controls.
   return (
-    <ReadingShell slug={issue.slug} narration={narrate(issue)} defaultTheme={defaultTheme}>
+    <ReadingShell
+      slug={issue.slug}
+      narration={narrate(issue)}
+      defaultTheme={defaultTheme}
+      showAudio={showAudio}
+      fontScale={fontScale}
+    >
       <div className="mx-auto max-w-2xl px-5 py-10 sm:px-8 sm:py-14">
         <TransitionLink
           href="/issues"
@@ -51,7 +61,7 @@ export default async function IssuePage({
         </TransitionLink>
 
         <div className="mt-8">
-          <NewsletterIssue issue={issue} />
+          <NewsletterIssue issue={issue} showChart={showChart} showFatFinger={showFatFinger} />
         </div>
 
         {/* prev / next */}

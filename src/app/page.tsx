@@ -16,11 +16,13 @@ export default async function Home() {
   // admin override wins; otherwise the A/B test picks the label
   const override = await setting("heroCtaOverride", "");
   const ctaLabel = override.trim() ? override : pick("heroCta", bucket);
+  const showTicker = await setting("showTicker", true);
+  const footerNote = await setting("footerNote", "Not investment advice.");
 
   return (
     <>
       <AbBeacon bucket={bucket} />
-      <TickerBar />
+      {showTicker ? <TickerBar /> : null}
       <SiteNav />
       <main className="flex-1">
         <Hero ctaLabel={ctaLabel} />
@@ -30,7 +32,7 @@ export default async function Home() {
         <CtaBand />
         <Newsletter />
       </main>
-      <SiteFooter />
+      <SiteFooter note={footerNote} />
     </>
   );
 }

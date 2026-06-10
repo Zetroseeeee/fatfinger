@@ -6,6 +6,8 @@ import { TransitionProvider } from "@/components/ui/page-transition";
 import { Attribution } from "@/components/analytics/attribution";
 import { Pixels } from "@/components/analytics/pixels";
 import { AnnouncementBanner } from "@/components/announcement-banner";
+import { MaintenanceGate, AccentStyle, DebugBanner } from "@/components/site-settings";
+import { setting } from "@/lib/settings";
 
 const anton = Anton({
   variable: "--font-anton",
@@ -28,20 +30,24 @@ const plexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "fatfinger. The slip that moves markets",
-  description:
-    "fat finger (n.): the slip that moves markets. also: your sharpest read on them. Markets media with quant-grade analysis and a sense of humour, in a newsletter you'll actually want to open.",
-  metadataBase: new URL("https://fatfinger.news"),
-  openGraph: {
+export async function generateMetadata(): Promise<Metadata> {
+  const allowIndex = await setting("robotsIndex", true);
+  return {
     title: "fatfinger. The slip that moves markets",
     description:
-      "Markets media for people who take their money seriously and themselves less so. Quant-grade analysis, a sense of humour, no gatekeeping.",
-    url: "https://fatfinger.news",
-    siteName: "fatfinger.",
-    type: "website",
-  },
-};
+      "fat finger (n.): the slip that moves markets. also: your sharpest read on them. Markets media with quant-grade analysis and a sense of humour, in a newsletter you'll actually want to open.",
+    metadataBase: new URL("https://fatfinger.news"),
+    robots: allowIndex ? undefined : { index: false, follow: false },
+    openGraph: {
+      title: "fatfinger. The slip that moves markets",
+      description:
+        "Markets media for people who take their money seriously and themselves less so. Quant-grade analysis, a sense of humour, no gatekeeping.",
+      url: "https://fatfinger.news",
+      siteName: "fatfinger.",
+      type: "website",
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -54,11 +60,15 @@ export default async function RootLayout({
       className={`${anton.variable} ${poppins.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-paper text-ink font-body">
-        <AnnouncementBanner />
-        <TransitionProvider>{children}</TransitionProvider>
+        <AccentStyle />
+        <MaintenanceGate>
+          <AnnouncementBanner />
+          <TransitionProvider>{children}</TransitionProvider>
+        </MaintenanceGate>
         <Attribution />
         <Analytics />
-        <Pixels />
+        {(await setting("pixelsEnabled", true)) ? <Pixels /> : null}
+        <DebugBanner />
       </body>
     </html>
   );

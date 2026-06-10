@@ -487,6 +487,22 @@ export async function getRecentSubscribers(limit = 50): Promise<SubRow[]> {
   }
 }
 
+/** purge unconfirmed signups older than N days (Settings → Advanced) */
+export async function purgeUnconfirmed(days: number): Promise<number> {
+  if (!sql || !Number.isFinite(days) || days <= 0) return 0;
+  try {
+    const rows = await sql<{ email: string }[]>`
+      delete from subscribers
+      where status = 'pending'
+        and created_at < now() - make_interval(days => ${Math.floor(days)})
+      returning email
+    `;
+    return rows.length;
+  } catch {
+    return 0;
+  }
+}
+
 /** clear the optimizer's verdict so the A/B test re-opens (admin control) */
 export async function resetAbDecision(experiment: string): Promise<void> {
   if (!sql) return;

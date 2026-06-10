@@ -64,7 +64,7 @@ function FooterLink({ href, label }: { href: string; label: string }) {
   );
 }
 
-export function SiteFooter() {
+export function SiteFooter({ note = "not investment advice" }: { note?: string }) {
   return (
     <footer className="bg-ink text-paper">
       <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
@@ -104,7 +104,7 @@ export function SiteFooter() {
             reserved
           </p>
           <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-paper/45">
-            Illustrative data only · not investment advice
+            Illustrative data only · {note}
           </p>
         </div>
       </div>

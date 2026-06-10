@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { hasDb, upsertPending, recordConversion } from "@/lib/db";
-import { hasResend, sendConfirmEmail } from "@/lib/email";
+import { hasDb, upsertPending, recordConversion, confirmByToken } from "@/lib/db";
+import { hasResend, sendConfirmEmail, sendWelcomeEmail } from "@/lib/email";
+import { getSettingsCached } from "@/lib/settings";
 
 /**
  * POST /api/subscribe - newsletter signup (double opt-in).
@@ -58,12 +59,21 @@ export async function POST(req: Request) {
 
   try {
     const token = crypto.randomUUID();
+    const settings = await getSettingsCached();
+    const doubleOptIn = settings.doubleOptIn !== false;
 
     if (hasDb) {
       await upsertPending(email, token, arm, src);
     }
     if (arm) {
       await recordConversion(arm);
+    }
+
+    if (!doubleOptIn && hasDb) {
+      // single opt-in (Settings → Email): confirm immediately, no email gate
+      await confirmByToken(token);
+      if (settings.welcomeEmail && hasResend) await sendWelcomeEmail(email);
+      return NextResponse.json({ ok: true, pendingConfirmation: false });
     }
 
     if (canConfirm) {

@@ -1,13 +1,15 @@
 import { ISSUES, getIssue as getStaticIssue, type Issue } from "@/content/issues";
 import { getPublishedIssues, getPublishedIssue } from "@/lib/db";
+import { setting } from "@/lib/settings";
 
 /**
- * The live archive: AI-published issues (newest first) followed by the static
- * sample issues. So the daily engine output appears on /issues automatically,
- * with the hand-written samples as a backstop while the list is young.
+ * The live archive: AI-published issues (newest first), then the static sample
+ * issues unless they've been switched off in Settings → Site.
  */
 export async function getAllIssues(): Promise<Issue[]> {
   const published = await getPublishedIssues();
+  const showSamples = await setting("showSampleIssues", true);
+  if (!showSamples) return published;
   const seen = new Set(published.map((i) => i.slug));
   return [...published, ...ISSUES.filter((i) => !seen.has(i.slug))];
 }

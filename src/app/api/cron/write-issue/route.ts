@@ -75,23 +75,41 @@ export async function GET(req: Request) {
     );
   }
 
+  const settings = await getAllSettings();
+  const force = new URL(req.url).searchParams.get("force") === "1"; // manual run from /admin
+
+  // The Vercel cron fires hourly; Settings decide which hour/days actually run.
   const now = new Date();
+  const dow = now.getUTCDay(); // 0 = Sun, 6 = Sat
+  if (!force && settings.weekdaysOnly !== false && (dow === 0 || dow === 6)) {
+    return NextResponse.json({ ok: true, skipped: "weekend (weekdaysOnly is on)" });
+  }
+  const publishHour = Number(settings.publishHour ?? 11);
+  if (!force && now.getUTCHours() !== publishHour) {
+    return NextResponse.json({ ok: true, skipped: `waiting for ${publishHour}:00 UTC` });
+  }
   const iso = now.toISOString().slice(0, 10); // 2026-06-09
 
   // Feed the engine the REAL tape so it writes around real numbers (and the real
   // chart it picks via chartSymbol stays consistent with the prose).
   const tape = await fetchTape(req);
 
+  const mood = String(settings.defaultMood ?? "").trim();
+  const maxStories = Number(settings.maxStories ?? 6) || 6;
   const packet: Packet = {
     date: displayDate(now),
     slug: iso,
     tape,
-    notes:
+    notes: [
       "Cover the day's biggest market mover, the energy/commodities angle, a few rapid-fire desk items, one genuinely funny fat-finger market moment, and one chart. Lead with energy. Use the real tape above; set chartSymbol to the instrument whose live price best tells the lead story.",
+      `Include about ${maxStories} rapid-fire desk items.`,
+      mood ? `Aim the mood line at roughly: "${mood}".` : "",
+    ]
+      .filter(Boolean)
+      .join(" "),
   };
 
   try {
-    const settings = await getAllSettings();
     const issue = await writeIssue(packet);
 
     // 1) publish (or keep as a draft) per the admin Settings toggle

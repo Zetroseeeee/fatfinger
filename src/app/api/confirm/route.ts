@@ -1,4 +1,6 @@
 import { confirmByToken } from "@/lib/db";
+import { sendWelcomeEmail } from "@/lib/email";
+import { setting } from "@/lib/settings";
 
 /**
  * GET /api/confirm?token=… - the double-opt-in landing. Flips a pending
@@ -21,6 +23,11 @@ function page(title: string, body: string, ok: boolean) {
 export async function GET(req: Request) {
   const token = new URL(req.url).searchParams.get("token") ?? "";
   const email = token ? await confirmByToken(token) : null;
+
+  // optional welcome note (Settings → Email), best-effort
+  if (email && (await setting("welcomeEmail", false))) {
+    sendWelcomeEmail(email).catch(() => {});
+  }
 
   const html = email
     ? page(

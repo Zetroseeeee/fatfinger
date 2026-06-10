@@ -71,7 +71,15 @@ function Source({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function NewsletterIssue({ issue }: { issue: Issue }) {
+export function NewsletterIssue({
+  issue,
+  showChart = true,
+  showFatFinger = true,
+}: {
+  issue: Issue;
+  showChart?: boolean;
+  showFatFinger?: boolean;
+}) {
   const mins = readingMinutes(issue);
 
   return (
@@ -190,22 +198,30 @@ export function NewsletterIssue({ issue }: { issue: Issue }) {
         ))}
       </div>
 
-      {/* 6 - FAT FINGER OF THE DAY */}
-      <SectionHeader index="05" title="Fat Finger of the Day" />
-      <div className="rounded-2xl border border-signal/30 bg-signal/[0.06] p-6">
-        <h4 className="font-display text-xl uppercase leading-tight text-[var(--rd-text)]">
-          {issue.fatFinger.headline}
-        </h4>
-        <p className="mt-2.5 text-[16px] leading-relaxed text-[var(--rd-body)]">
-          {issue.fatFinger.body}
-        </p>
-        <Take>{issue.fatFinger.take}</Take>
-        <Source>{issue.fatFinger.source}</Source>
-      </div>
+      {/* 6 - FAT FINGER OF THE DAY (Settings → Content) */}
+      {showFatFinger ? (
+        <>
+          <SectionHeader index="05" title="Fat Finger of the Day" />
+          <div className="rounded-2xl border border-signal/30 bg-signal/[0.06] p-6">
+            <h4 className="font-display text-xl uppercase leading-tight text-[var(--rd-text)]">
+              {issue.fatFinger.headline}
+            </h4>
+            <p className="mt-2.5 text-[16px] leading-relaxed text-[var(--rd-body)]">
+              {issue.fatFinger.body}
+            </p>
+            <Take>{issue.fatFinger.take}</Take>
+            <Source>{issue.fatFinger.source}</Source>
+          </div>
+        </>
+      ) : null}
 
-      {/* 7 - CHART OF THE DAY */}
-      <SectionHeader index="06" title="Chart of the Day" />
-      <FatFingerChart {...issue.chart} />
+      {/* 7 - CHART OF THE DAY (Settings → Content) */}
+      {showChart ? (
+        <>
+          <SectionHeader index={showFatFinger ? "06" : "05"} title="Chart of the Day" />
+          <FatFingerChart {...issue.chart} />
+        </>
+      ) : null}
 
       {/* 8 - SIGN-OFF */}
       <div className="mt-14 border-t border-[var(--rd-line)] pt-8 text-center">

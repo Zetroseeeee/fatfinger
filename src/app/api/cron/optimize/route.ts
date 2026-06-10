@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAbStats, getDecision, setDecision } from "@/lib/db";
+import { getAbStats, getDecision, setDecision, purgeUnconfirmed } from "@/lib/db";
 import { getAllSettings } from "@/lib/settings";
 
 /**
@@ -55,10 +55,17 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
+  // thresholds + auto-promote come from admin Settings → Growth
+  const settings = await getAllSettings();
+
+  // nightly housekeeping first (must run even after a winner is decided):
+  // purge stale unconfirmed signups (Settings → Advanced)
+  const purged = await purgeUnconfirmed(Number(settings.dataRetentionDays ?? 0));
+
   // already concluded? leave it (sticky winner)
   const current = await getDecision("site");
   if (current === "a" || current === "b") {
-    return NextResponse.json({ ok: true, status: "already_decided", winner: current });
+    return NextResponse.json({ ok: true, status: "already_decided", winner: current, purged });
   }
 
   const stats = await getAbStats();
@@ -69,8 +76,6 @@ export async function GET(req: Request) {
   const iB = b?.impressions ?? 0;
   const cB = b?.conversions ?? 0;
 
-  // thresholds + auto-promote come from admin Settings → Growth
-  const settings = await getAllSettings();
   const conf = String(settings.abConfidence ?? "95") as keyof typeof Z_FOR;
   const minSignups = Number(settings.abMinSignups ?? 30);
   const autoPromote = settings.abAutoPromote !== false;
@@ -81,5 +86,5 @@ export async function GET(req: Request) {
   // record the running verdict always; only PROMOTE the winner if enabled
   await setDecision("site", autoPromote ? result.winner : null, result.z, detail);
 
-  return NextResponse.json({ ok: true, autoPromote, ...detail });
+  return NextResponse.json({ ok: true, autoPromote, purged, ...detail });
 }
