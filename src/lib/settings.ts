@@ -1,5 +1,8 @@
+import { unstable_cache } from "next/cache";
 import { sql } from "@/lib/db";
 import { settingDefaults } from "@/lib/settings-config";
+
+export const SETTINGS_TAG = "app-settings";
 
 /**
  * Key/value settings store. Admin reads/writes go straight to the DB; public
@@ -49,31 +52,25 @@ export async function setSettings(patch: Record<string, unknown>): Promise<void>
         on conflict (key) do update set value = excluded.value, updated_at = now()
       `;
     }
-    settingsCache = { at: 0, map: {} }; // bust
   } catch {
     /* best-effort */
   }
 }
 
-// ── Non-blocking cache for public pages ───────────────────────────────────
-let settingsCache: { at: number; map: Record<string, unknown> } = { at: 0, map: {} };
-let inflight = false;
+// ── Cached read for public pages ──────────────────────────────────────────
+// Next's data cache: served from cache (no per-request DB), refreshed every 60s,
+// and busted instantly + reliably on save via revalidateTag(SETTINGS_TAG).
+const cachedSettings = unstable_cache(async () => getAllSettings(), ["app-settings-v1"], {
+  revalidate: 60,
+  tags: [SETTINGS_TAG],
+});
 
 export async function getSettingsCached(): Promise<Record<string, unknown>> {
-  const now = Date.now();
-  const fresh = now - settingsCache.at < 300_000 && Object.keys(settingsCache.map).length > 0;
-  if (!fresh && !inflight && sql) {
-    inflight = true;
-    getAllSettings()
-      .then((m) => {
-        settingsCache = { at: Date.now(), map: m };
-      })
-      .catch(() => {})
-      .finally(() => {
-        inflight = false;
-      });
+  try {
+    return await cachedSettings();
+  } catch {
+    return settingDefaults();
   }
-  return Object.keys(settingsCache.map).length ? settingsCache.map : settingDefaults();
 }
 
 /** convenience: one cached setting with a typed fallback (never blocks) */
