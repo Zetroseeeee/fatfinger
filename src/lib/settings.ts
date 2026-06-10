@@ -75,9 +75,11 @@ let settingsInflight: Promise<void> | null = null;
 export async function getSettingsCached(): Promise<Record<string, unknown>> {
   const now = Date.now();
   if (!settingsCache || now - settingsCache.at >= ttlMs()) {
-    // refresh, deduped across concurrent callers. NEVER Promise.race/abandon a
-    // query here: on a single pooled connection an abandoned query keeps
-    // running and poisons every query behind it (the /admin 35s-hang bug).
+    // refresh in the background, deduped across concurrent callers. NEVER
+    // block a page render on this query and NEVER Promise.race/abandon it:
+    // settings reads run concurrently with page queries, and anything that
+    // waits on (or poisons) the pooled connection hangs whole routes.
+    // A cold instance serves defaults for its very first render, then is warm.
     settingsInflight ??= getAllSettings()
       .then((map) => {
         settingsCache = { at: Date.now(), map };
@@ -86,8 +88,6 @@ export async function getSettingsCached(): Promise<Record<string, unknown>> {
       .finally(() => {
         settingsInflight = null;
       });
-    // cold instance: wait for the first real load; warm: serve stale, refresh in bg
-    if (!settingsCache) await settingsInflight;
   }
   return settingsCache?.map ?? settingDefaults();
 }

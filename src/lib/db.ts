@@ -19,10 +19,11 @@ export const sql = url
   ? postgres(url, {
       prepare: false,
       idle_timeout: 20,
-      // One connection per serverless invocation (Supabase's recommended setup);
-      // the pooler handles cross-invocation concurrency. Fewer connections = far
-      // less pooler pressure, which was intermittently hanging cold starts.
-      max: 1,
+      // Small pool: generateMetadata, the page, and the background settings
+      // refresh can each hold a connection. With max: 1 those concurrent
+      // queries pipeline onto one connection, which Supabase's transaction
+      // pooler stalls on (the 30s page hangs).
+      max: 3,
       // Bound connect time and recycle connections quickly so a stale/poisoned
       // pooler connection is discarded within ~90s rather than reused.
       connect_timeout: 8,
