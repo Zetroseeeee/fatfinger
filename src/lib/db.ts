@@ -11,25 +11,103 @@ import type { Issue } from "@/content/issues";
  */
 const url = process.env.DATABASE_URL;
 
-// module-level singleton, reused across warm serverless invocations.
 // `prepare: false` is required for Supabase's transaction pooler (pgbouncer);
 // SSL is required by Supabase/Neon (skip only for a local Postgres).
 const isLocal = !!url && /localhost|127\.0\.0\.1/.test(url);
-export const sql = url
-  ? postgres(url, {
-      prepare: false,
-      idle_timeout: 20,
-      // Small pool: generateMetadata, the page, and the background settings
-      // refresh can each hold a connection. With max: 1 those concurrent
-      // queries pipeline onto one connection, which Supabase's transaction
-      // pooler stalls on (the 30s page hangs).
-      max: 3,
-      // Bound connect time and recycle connections quickly so a stale/poisoned
-      // pooler connection is discarded within ~90s rather than reused.
-      connect_timeout: 8,
-      max_lifetime: 90,
-      ssl: isLocal ? false : "require",
-    })
+type Pool = ReturnType<typeof postgres>;
+
+function mkPool(): Pool {
+  return postgres(url!, {
+    prepare: false,
+    idle_timeout: 20,
+    // Small pool: generateMetadata, the page, and the settings refresh can each
+    // hold a connection. With max: 1 concurrent queries pipeline onto one
+    // connection, which Supabase's transaction pooler stalls on.
+    max: 3,
+    connect_timeout: 8,
+    max_lifetime: 90,
+    ssl: isLocal ? false : "require",
+  });
+}
+
+let pool: Pool | null = url ? mkPool() : null;
+
+/**
+ * SELF-HEALING pool. When a serverless instance is frozen (post-response) and
+ * later thawed, idle sockets in the pool are dead server-side but look fine to
+ * postgres.js - the next query waits on them forever (30s+ route hangs), and
+ * Supabase's pooler ignores statement_timeout so the server won't save us.
+ * So every query gets a JS-side cap: on a hang we destroy the WHOLE pool
+ * (killing the dead socket - nothing left to poison), build a fresh one, and
+ * retry once. Worst case ~5s once per thawed instance, then healthy.
+ */
+const QUERY_CAP_MS = 4000;
+
+function healthyQuery(args: unknown[]): Promise<unknown> {
+  type Fn = (...a: unknown[]) => Promise<unknown>;
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const attempt = (p: Pool, isRetry: boolean) => {
+      const timer = setTimeout(() => {
+        if (settled) return;
+        // hung socket: nuke the pool so the zombie can't poison anything,
+        // reconnect fresh, retry the same query once
+        const dead = pool;
+        pool = mkPool();
+        void dead?.end({ timeout: 1 }).catch(() => {});
+        if (isRetry) {
+          settled = true;
+          reject(new Error("db query timed out twice"));
+        } else {
+          attempt(pool, true);
+        }
+      }, QUERY_CAP_MS);
+      (p as unknown as Fn)(...args).then(
+        (v) => {
+          clearTimeout(timer);
+          if (!settled) {
+            settled = true;
+            resolve(v);
+          }
+        },
+        (e) => {
+          clearTimeout(timer);
+          if (settled) return;
+          // connection-class failures (e.g. a sibling query just healed the
+          // pool, ending this one's socket) retry once on the current pool;
+          // real SQL errors surface immediately.
+          const code = (e as { code?: string })?.code ?? "";
+          if (!isRetry && code.startsWith("CONNECTION_")) {
+            if (pool === p) {
+              const dead = pool;
+              pool = mkPool();
+              void dead?.end({ timeout: 1 }).catch(() => {});
+            }
+            attempt(pool!, true);
+          } else {
+            settled = true;
+            reject(e);
+          }
+        }
+      );
+    };
+    attempt(pool!, false);
+  });
+}
+
+// Callers keep the exact `sql\`...\`` syntax + helpers (sql.json etc.); the
+// proxy routes template-tag calls through healthyQuery on the CURRENT pool.
+export const sql: Pool | null = url
+  ? (new Proxy(function () {} as unknown as Record<PropertyKey, unknown>, {
+      apply: (_t, _this, args: unknown[]) => healthyQuery(args),
+      get: (_t, prop) => {
+        const p = pool as unknown as Record<PropertyKey, unknown>;
+        const v = p[prop];
+        return typeof v === "function"
+          ? (v as (...a: unknown[]) => unknown).bind(pool)
+          : v;
+      },
+    }) as unknown as Pool)
   : null;
 
 export const hasDb = !!sql;
