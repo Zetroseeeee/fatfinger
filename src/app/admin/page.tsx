@@ -33,13 +33,19 @@ function withTimeout<T>(p: Promise<T>, fallback: T, ms = 7000): Promise<T> {
 export default async function AdminPage() {
   if (!(await isAdmin())) redirect("/admin/login");
 
-  const [bd, recent, ab, sources, winner] = await Promise.all([
-    withTimeout(getSubscriberBreakdown(), { confirmed: 0, pending: 0, unsubscribed: 0, total: 0 }),
-    withTimeout(getRecentSubscribers(50), []),
-    withTimeout(getAbStats(), []),
-    withTimeout(getSignupsBySource(), []),
-    withTimeout(getDecision("site"), null),
-  ]);
+  // Sequential, not Promise.all: with one pooled connection, concurrent queries
+  // pipeline onto it and the Supabase transaction pooler stalls. One at a time is
+  // ~1s total and rock-solid. Each is still capped so nothing can hang the page.
+  const bd = await withTimeout(getSubscriberBreakdown(), {
+    confirmed: 0,
+    pending: 0,
+    unsubscribed: 0,
+    total: 0,
+  });
+  const recent = await withTimeout(getRecentSubscribers(50), []);
+  const ab = await withTimeout(getAbStats(), []);
+  const sources = await withTimeout(getSignupsBySource(), []);
+  const winner = await withTimeout(getDecision("site"), null);
   const byBucket: Record<string, AbRow> = {};
   for (const r of ab) byBucket[r.bucket] = r;
   const arms = ["a", "b"] as const;
