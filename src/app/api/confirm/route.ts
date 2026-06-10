@@ -24,9 +24,14 @@ export async function GET(req: Request) {
   const token = new URL(req.url).searchParams.get("token") ?? "";
   const email = token ? await confirmByToken(token) : null;
 
-  // optional welcome note (Settings → Email), best-effort
+  // optional welcome note (Settings → Email), best-effort but awaited -
+  // fire-and-forget work dies when the serverless instance freezes
   if (email && (await setting("welcomeEmail", false))) {
-    sendWelcomeEmail(email).catch(() => {});
+    try {
+      await sendWelcomeEmail(email);
+    } catch {
+      /* the confirmation page still renders */
+    }
   }
 
   const html = email

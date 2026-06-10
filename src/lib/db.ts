@@ -163,30 +163,29 @@ export async function getDecision(experiment: string): Promise<string | null> {
   }
 }
 
-// Non-blocking decision cache. getBucket() runs on the homepage hot path, so it
-// must NEVER await the DB - that turned every page load into a cross-region DB
-// round-trip (and a hang when the pooler was slow). We return the cached value
-// (or null) instantly and refresh in the background. On warm instances the
-// winner is served; a cold instance serves the 50/50 split for one request then
-// warms up. The page never waits on the database.
+// Decision cache for getBucket() on the homepage hot path. Refreshes are
+// deduped and AWAITED: fire-and-forget DB work dies when the serverless
+// instance freezes after responding, leaving a dead connection that hangs the
+// next request 30s+. The query is one indexed select (~40ms) once per 5 min
+// per instance - cheap enough to wait for.
 let decisionCache: { at: number; map: Record<string, string | null> } = {
   at: 0,
   map: {},
 };
-let decisionInflight = false;
+let decisionInflight: Promise<void> | null = null;
 export async function getDecisionCached(experiment: string): Promise<string | null> {
   const now = Date.now();
   const fresh = now - decisionCache.at < 300_000 && experiment in decisionCache.map;
-  if (!fresh && !decisionInflight && sql) {
-    decisionInflight = true;
-    getDecision(experiment)
+  if (!fresh && sql) {
+    decisionInflight ??= getDecision(experiment)
       .then((w) => {
         decisionCache = { at: Date.now(), map: { ...decisionCache.map, [experiment]: w } };
       })
       .catch(() => {})
       .finally(() => {
-        decisionInflight = false;
+        decisionInflight = null;
       });
+    await decisionInflight;
   }
   return decisionCache.map[experiment] ?? null;
 }

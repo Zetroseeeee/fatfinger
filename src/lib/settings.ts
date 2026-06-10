@@ -75,11 +75,11 @@ let settingsInflight: Promise<void> | null = null;
 export async function getSettingsCached(): Promise<Record<string, unknown>> {
   const now = Date.now();
   if (!settingsCache || now - settingsCache.at >= ttlMs()) {
-    // refresh in the background, deduped across concurrent callers. NEVER
-    // block a page render on this query and NEVER Promise.race/abandon it:
-    // settings reads run concurrently with page queries, and anything that
-    // waits on (or poisons) the pooled connection hangs whole routes.
-    // A cold instance serves defaults for its very first render, then is warm.
+    // Refresh, deduped across concurrent callers, and AWAITED. Never
+    // fire-and-forget DB work in serverless: the instance freezes the moment
+    // the response is sent, the in-flight query dies on a frozen socket, and
+    // the next request on that instance hangs 30s+ behind the dead connection.
+    // (Also never Promise.race/abandon - same poisoning, different flavour.)
     settingsInflight ??= getAllSettings()
       .then((map) => {
         settingsCache = { at: Date.now(), map };
@@ -88,6 +88,7 @@ export async function getSettingsCached(): Promise<Record<string, unknown>> {
       .finally(() => {
         settingsInflight = null;
       });
+    await settingsInflight;
   }
   return settingsCache?.map ?? settingDefaults();
 }
