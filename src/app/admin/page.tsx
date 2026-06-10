@@ -10,8 +10,8 @@ import {
   type AbRow,
 } from "@/lib/db";
 import { EXPERIMENTS } from "@/lib/ab";
-import { Roadmap } from "@/components/admin/roadmap";
-import { AdminControls } from "@/components/admin/admin-controls";
+import { PipelineGraph } from "@/components/admin/pipeline-graph";
+import { AdminOps } from "@/components/admin/admin-ops";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -70,8 +70,17 @@ export default async function AdminPage() {
               The whole desk.
             </h1>
           </div>
-          <AdminControls />
         </div>
+
+        {/* operations */}
+        <section className="mt-8">
+          <h2 className="font-mono text-[12px] uppercase tracking-[0.18em] text-ink-soft">
+            Operations
+          </h2>
+          <div className="mt-4">
+            <AdminOps />
+          </div>
+        </section>
 
         {/* KPIs */}
         <div className="mt-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -93,10 +102,10 @@ export default async function AdminPage() {
         {/* pipeline */}
         <section className="mt-14">
           <h2 className="font-mono text-[12px] uppercase tracking-[0.18em] text-ink-soft">
-            The pipeline — what&apos;s done, live, and next
+            The pipeline — drag, zoom, click a node
           </h2>
           <div className="mt-5">
-            <Roadmap />
+            <PipelineGraph />
           </div>
         </section>
 
